@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+dataframe.csv
+output/cropped/*
+output/csv/*
+output/detects/*
+output/pages/*
