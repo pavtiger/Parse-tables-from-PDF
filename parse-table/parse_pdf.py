@@ -5,14 +5,17 @@ from dataclasses import dataclass
 
 from pdf2image import convert_from_path
 
+from main import convert_to_csv
+
 
 # Important notice: This script assumes that there is a maximum of 1 table in a page (from research is seems to be true)
-PDF_QUALITY = 300  # Pdf up-scaling (200 is advised, lowering will reduce RAM and time usage)
+PDF_QUALITY = 200  # PDF up-scaling (200 is advised, lowering will reduce RAM and time usage)
 # For instance, 300 requires ~8gb RAM
 
 
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--input", required=True, help="path to input image to be OCR'd")
+ap.add_argument("-i", "--input", required=True, help="Path to input pdf file to convert")
+ap.add_argument("-l", "--limit", required=False, help="Process only first N pages. (-1 if all)", default=-1)
 # ap.add_argument("-o", "--output", required=True, help="path to output CSV file")
 args = vars(ap.parse_args())
 
@@ -55,7 +58,10 @@ def detect_table(filename, page):
 if __name__ == '__main__':
     pages = convert_from_path(f'pdf/{args["input"]}', PDF_QUALITY)
 
-    for page_index, page in enumerate(pages):
+    if args["limit"] == -1:
+        args["limit"] = len(pages)
+
+    for page_index, page in enumerate(pages[:int(args["limit"])]):
         print(f'Processing page number {page_index}')
         image_path = f'pdf/pages/page_{page_index}.jpg'
         page.save(image_path, 'PNG')  # Save page as an image
@@ -65,4 +71,10 @@ if __name__ == '__main__':
         if detected_cont != rect(0, 0, 0, 0):
             image = cv2.imread(image_path)
             cropped = image[detected_cont.y:detected_cont.y + detected_cont.h, detected_cont.x:detected_cont.x + detected_cont.w]
-            cv2.imwrite(f"pdf/cropped/cropped_table_{page_index}.jpg", cropped)
+            cropped_filename = f"pdf/cropped/cropped_table_{page_index}.jpg"
+            cv2.imwrite(cropped_filename, cropped)
+
+            # Convert to csv
+            convert_to_csv(cropped_filename, f"pdf/csv/export_table_{page_index}.csv")
+        else:
+            print('No tables on this page')
