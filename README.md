@@ -26,3 +26,9 @@ You can also lower the render quality to reduce RAM usage
 ```
 python3 main.py --input example/rencap2021.pdf --limit 10 --quality 100
 ```
+
+All availible flags:
+* _input_ - Path to input pdf file to convert
+* _remote_ - Link to a remote location from where to obtain PDF file
+* _limit_ - Process only first N pages. (-1 if all)
+* _quality_ - PDF page render quality (default 200). Lower to reduce RAM usage. For example, 300 requires 8gb of RAM
