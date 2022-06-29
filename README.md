@@ -1,13 +1,23 @@
 # Parse tables from PDF
+This tool was created to automize the process of pulling tables from PDF documents. It goes through all the pages, 
+recognises where tables are and then proceeds to transfer them to csv. Using pytesseract it parses text from each cell and determines its position in the table.
 
 ## Installation
+Linux
 ```
-# sudo apt install tesseract-ocr-rus
-# sudo apt install tesseract-ocr
+sudo apt install tesseract-ocr-rus
+sudo apt install tesseract-ocr
 
-# sudo pip3 install pytesseract
-# sudo pip3 install tqdm
+sudo pip3 install pytesseract
+sudo pip3 install tqdm
 ```
+
+Windows
+* Download tesseract exe from https://github.com/UB-Mannheim/tesseract/wiki.
+* Install this exe in C:\Program Files (x86)\Tesseract-OCR
+* Open virtual machine command prompt in windows or anaconda prompt.
+* Run `pip install pytesseract`
+
 
 ## Running
 From local PDF file
