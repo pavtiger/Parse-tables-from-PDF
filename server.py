@@ -1,14 +1,12 @@
-import base64
-from threading import Thread
 import time
 import os
-import subprocess
 from glob import glob
-from datetime import datetime
-from io import BytesIO
-from zipfile import ZipFile
 import cv2
 import urllib.request
+import sys
+from io import StringIO
+from queue import Queue
+from threading import Thread
 
 from flask_socketio import SocketIO, emit
 from pdf2image import convert_from_path
@@ -23,17 +21,29 @@ from parse_table import convert_to_csv
 # Init app
 app = Flask(__name__, static_url_path='')
 socketio = SocketIO(app)
+process_queue = Queue()
+
+BAR_LENGTH = 50
+
+
+def emit_console(start_time, message, sid):
+    current_time = int(time.time() * 1000)
+    socketio.emit('progress', {
+        'time': current_time - start_time,
+        'stdout': message
+    }, room=sid)
 
 
 def process_by_link(link, quality, limit, sid):
-    log = "Processing started\n\n"
-    prefix_path = 'static/'
+    backup = sys.stdout
+    sys.stdout = mystdout = StringIO()
+
+    print('Processing started')
+    print(' ' * BAR_LENGTH)
+    console_prefix, prefix_path = '', 'static/'
 
     start_time = int(time.time() * 1000)  # Current time in milliseconds
-    socketio.emit('progress', {
-        'time': 0,
-        'stdout': log
-    }, room=sid)
+    emit_console(start_time, mystdout.getvalue(), sid)
 
     # Clear output directory
     clear_directory(f'{prefix_path}output/csv/*')
@@ -60,22 +70,20 @@ def process_by_link(link, quality, limit, sid):
             image = cv2.imread(image_path)
             cropped = image[detected_cont.y:detected_cont.y + detected_cont.h,
                       detected_cont.x:detected_cont.x + detected_cont.w]
+
             cropped_filename = f"{prefix_path}output/cropped/cropped_table_{page_index + 1}.jpg"
             cv2.imwrite(cropped_filename, cropped)
 
             # Convert to csv
-            convert_to_csv(cropped_filename, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv")
+            console_prefix = console_prefix + mystdout.getvalue()
+            mystdout = convert_to_csv(cropped_filename, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
+                           socketio, mystdout, sid, start_time, console_prefix)
+            print('CSV file saved\n')
+
         else:
-            print('No tables on this page')
-            log += 'No tables on this page\n'
+            print('No tables on this page\n')
 
-        log += f'Finished processing page number {page_index + 1}\n\n'
-
-        current_time = int(time.time() * 1000)
-        socketio.emit('progress', {
-            'time': current_time - start_time,
-            'stdout': log
-        }, room=sid)
+        emit_console(start_time, console_prefix + mystdout.getvalue(), sid)
 
     # Send download paths
     target_directory = f'{prefix_path}output/csv'
@@ -86,15 +94,15 @@ def process_by_link(link, quality, limit, sid):
     for i, path in enumerate(paths):
         paths[i] = path.replace(prefix_path, '')
 
-    print(paths)
-    log += "Starting download\n"
+    print("Starting download")
     current_time = int(time.time() * 1000)
     socketio.emit('progress', {
         'time': current_time - start_time,
-        'stdout': log
+        'stdout': console_prefix + mystdout.getvalue()
     }, room=sid)
 
     socketio.emit('download', paths, room=sid)
+    sys.stdout = backup
 
 
 # Return main page
@@ -105,8 +113,10 @@ def root():
 
 @socketio.on('send')
 def get_data(message):
-    print(message)
-    process_by_link(message['link'], 150, message['limit'], request.sid)
+    if not process_queue.empty():
+        socketio.emit('progress', {'stdout': 'Server busy', 'time': 0}, room=request.sid)
+
+    process_queue.put({'sid': request.sid, 'message': message})
 
 
 # Get files from server (e.g libs)
@@ -115,8 +125,21 @@ def send_js(path):
     return send_from_directory('js', path)
 
 
+def game_loop():
+    while True:
+        if process_queue.empty() > 0:
+            item = process_queue.get()
+            process_by_link(item['message']['link'], 150, item['message']['limit'], item['sid'])
+            process_queue.task_done()
+
+        time.sleep(1)
+
+
 if __name__ == "__main__":
     eventlet.monkey_patch()
+
+    x = Thread(target=game_loop, args=())
+    x.start()
 
     print(f"Listening on http://{ip_address}:{port}")
     socketio.run(app, host=ip_address, port=port)
