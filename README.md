@@ -2,6 +2,12 @@
 This tool was created to automize the process of pulling tables from PDF documents. It goes through all the pages, 
 recognises where tables are and then proceeds to transfer them to csv. Using pytesseract it parses text from each cell and determines its position in the table.
 
+You can use this tool by either directly running the python script along with some flags or by running a Web server that will host a web page for uploading files to procees them on server and return the csv files. Whilst displaying the current progress.
+
+Here's the front page
+![image](https://user-images.githubusercontent.com/36619129/176673780-6ea4bd77-7f36-42f2-bfba-b199e533f29f.png)
+
+
 ## Installation
 Linux
 ```
