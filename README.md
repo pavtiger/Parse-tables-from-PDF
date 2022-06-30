@@ -5,11 +5,8 @@ recognises where tables are and then proceeds to transfer them to csv. Using pyt
 ## Installation
 Linux
 ```
-sudo apt install tesseract-ocr-rus
-sudo apt install tesseract-ocr
-
-sudo pip3 install pytesseract
-sudo pip3 install tqdm
+sudo apt install tesseract-ocr tesseract-ocr-rus
+sudo pip3 install pytesseract opencv-python tqdm
 ```
 
 Windows
