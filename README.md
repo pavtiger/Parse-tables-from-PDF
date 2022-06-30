@@ -29,13 +29,13 @@ python3 main.py --remote https://www.renbroker.ru/storage/uploads/2022/02/24/621
 
 All data will output to `output/` directory. You can find example results in `example/`.
 
-You can also lower the render quality to reduce RAM usage
+You can also change the render quality (>= 200)
 ```
-python3 main.py --input example/rencap2021.pdf --limit 10 --quality 100
+python3 main.py --input example/rencap2021.pdf --limit 10 --quality 300
 ```
 
 All availible flags:
 * _input_ - Path to input pdf file to convert
 * _remote_ - Link to a remote location from where to obtain PDF file
 * _limit_ - Process only first N pages. (-1 if all)
-* _quality_ - PDF page render quality (default 200). Lower to reduce RAM usage. For example, 300 requires 8gb of RAM
+* _quality_ - PDF page render quality (default 200). Increasing will consume more RAM, but going under 200 is **highly unadvised**. This will cause recongision **errors**. For reference, 300 requires 8gb of RAM
