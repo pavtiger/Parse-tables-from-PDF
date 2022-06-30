@@ -133,3 +133,9 @@ output/cropped/*
 output/csv/*
 output/detects/*
 output/pages/*
+
+static/output/cropped/*
+static/output/csv/*
+static/output/detects/*
+static/output/pages/*
+
