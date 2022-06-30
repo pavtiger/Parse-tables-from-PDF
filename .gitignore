@@ -133,9 +133,12 @@ output/cropped/*
 output/csv/*
 output/detects/*
 output/pages/*
+output/debug/*
 
 static/output/cropped/*
 static/output/csv/*
 static/output/detects/*
 static/output/pages/*
+static/output/debug/*
 
+ip.py

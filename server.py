@@ -7,12 +7,7 @@ from glob import glob
 from datetime import datetime
 from io import BytesIO
 from zipfile import ZipFile
-import threading
-import sys
-import asyncio
 import cv2
-from io import StringIO
-from multiprocessing import Process
 import urllib.request
 
 from flask_socketio import SocketIO, emit
@@ -21,20 +16,13 @@ import eventlet
 from flask import Flask, send_from_directory, send_file, render_template, Response, request, g
 
 from ip import ip_address, port
-from main import detect_table, Rect
+from main import detect_table, Rect, clear_directory
 from parse_table import convert_to_csv
 
 
 # Init app
-# async_mode = None
 app = Flask(__name__, static_url_path='')
 socketio = SocketIO(app)
-
-
-def clear_directory(path):
-    files = glob(path)
-    for f in files:
-        os.remove(f)
 
 
 def process_by_link(link, quality, limit, sid):
@@ -66,7 +54,7 @@ def process_by_link(link, quality, limit, sid):
         image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
         page.save(image_path, 'PNG')  # Save page as an image
 
-        detected_cont = detect_table(image_path, page_index)
+        detected_cont = detect_table(image_path, page_index, 'static/')
 
         if detected_cont != Rect(0, 0, 0, 0):
             image = cv2.imread(image_path)
@@ -118,7 +106,7 @@ def root():
 @socketio.on('send')
 def get_data(message):
     print(message)
-    process_by_link(message['link'], 100, message['limit'], request.sid)
+    process_by_link(message['link'], 150, message['limit'], request.sid)
 
 
 # Get files from server (e.g libs)
@@ -128,7 +116,6 @@ def send_js(path):
 
 
 if __name__ == "__main__":
-    # This code and game_loop() are needed if you want to do wome tasks in background of the app (e.g. collision check)
     eventlet.monkey_patch()
 
     print(f"Listening on http://{ip_address}:{port}")
