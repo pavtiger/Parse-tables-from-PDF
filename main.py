@@ -4,6 +4,8 @@ import argparse
 from dataclasses import dataclass
 from pdf2image import convert_from_path
 import urllib.request
+import sys
+from datetime import datetime
 
 from parse_table import convert_to_csv
 
@@ -63,7 +65,7 @@ if __name__ == '__main__':
     if args["input"] == "":
         # Remote file
         pdf_file = "output/remote_document.pdf"
-        urllib.request.urlretrieve(args["remote"], "output/remote_document.pdf")
+        urllib.request.urlretrieve(args["remote"], pdf_file)
     else:
         # Local file
         pdf_file = args["input"]
@@ -87,6 +89,8 @@ if __name__ == '__main__':
             cv2.imwrite(cropped_filename, cropped)
 
             # Convert to csv
-            convert_to_csv(cropped_filename, f"output/csv/export_table_{page_index}.csv")
+            convert_to_csv(cropped_filename, f"output/csv/export_table_page_{page_index}.csv")
         else:
             print('No tables on this page')
+
+        sys.stdout.flush()
