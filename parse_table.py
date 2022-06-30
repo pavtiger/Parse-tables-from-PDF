@@ -1,9 +1,11 @@
-
 import cv2
 import io
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import sys
+import time
+from io import StringIO
 
 try:
     import urllib.request as urllib
@@ -16,8 +18,8 @@ except ImportError:
     import Image
 import pytesseract
 
-
 DEBUG_MODE = False
+BAR_LENGTH = 50
 
 
 class cell:
@@ -55,7 +57,17 @@ def extract_value(x):
     return x[0].text
 
 
-def convert_to_csv(filename, output_path):
+def emit_console(start_time, message, sid, socketio):
+    current_time = int(time.time() * 1000)
+    socketio.emit('progress', {
+        'time': current_time - start_time,
+        'stdout': message
+    }, room=sid)
+
+
+def convert_to_csv(filename, output_path, socketio=None, mystdout=None, sid=None, start_time=None, console_prefix=None):
+    last_post_time = start_time
+
     im = imgread(filename)
     width, height, _ = im.shape
 
@@ -98,8 +110,10 @@ def convert_to_csv(filename, output_path):
     row_index = 0
     table_array, row = [], []
 
+    sys.stdout = mystdout = StringIO()
+
     # Iterate over all contours and recognise text inside
-    for cnt in tqdm(cont):
+    for ind, cnt in enumerate(cont):
         x, y, w, h = cv2.boundingRect(cnt)
         if (w * h) > (width * height * 0.75):
             continue  # Continue if the contour is the whole table
@@ -113,7 +127,7 @@ def convert_to_csv(filename, output_path):
 
         if text == '':  # If text is not recognised try searching for digits specifically
             text = pytesseract.image_to_string(cropped_image, lang='eng',
-                                                 config='--psm 10 --oem 3 -c tessedit_char_whitelist=0123456789')
+                                               config='--psm 10 --oem 3 -c tessedit_char_whitelist=0123456789')
             # Remove unwanted characters
             text = text.strip('\u000C')
             text = text.replace('\n', '')
@@ -131,6 +145,17 @@ def convert_to_csv(filename, output_path):
             cv2.imshow("output", cropped_image)  # Show image
             cv2.waitKey(0)
 
+        progress_bar = '⬛' * int(BAR_LENGTH * (ind / len(cont)))
+        print(progress_bar.ljust(BAR_LENGTH, '⬜'))
+
+        current_time = int(time.time() * 1000)
+        if current_time - last_post_time > 1000 and sid != None:
+            emit_console(start_time, console_prefix + mystdout.getvalue(), sid, socketio)
+
+            last_post_time = current_time
+
+        if ind != len(cnt) - 1: sys.stdout = mystdout = StringIO()
+
     for i in range(len(table_array)):
         table_array[i].sort()  # Sort cells in every row to get the correct order (initially it's not the correct)
 
@@ -142,6 +167,8 @@ def convert_to_csv(filename, output_path):
 
     df = pd.DataFrame(table_array)
     df.to_csv(output_path)
+
+    return mystdout
 
 
 if __name__ == '__main__':

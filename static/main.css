@@ -1,3 +1,38 @@
+@font-face {
+    font-family: terminal;
+    src: URL('/font.ttf') format('truetype');
+}
+
 #console {
     white-space:pre-wrap;
+    font-family: terminal;
+    font-size: 20px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#timer {
+    font-family: terminal;
+    font-size: 25px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#text {
+    font-family: terminal;
+    font-size: 35px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
