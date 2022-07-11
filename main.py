@@ -3,6 +3,9 @@ from glob import glob
 import os
 import urllib.request
 from dataclasses import dataclass
+import time
+import progressbar
+import sys
 
 import cv2
 import numpy as np
@@ -13,6 +16,8 @@ from parse_table import convert_to_csv
 
 # Important notice: This script assumes that there is a maximum of 1 table in a page (from research is seems to be true)
 
+
+pbar = None
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--input", required=False, help="Path to input pdf file to convert", default="")
@@ -38,6 +43,18 @@ def clear_directory(path):
     files = glob(path)
     for f in files:
         os.remove(f)
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
+def emit_console(start_time, message, sid, socketio):
+    current_time = int(time.time() * 1000)
+    socketio.emit('progress', {
+        'time': current_time - start_time,
+        'stdout': message
+    }, room=sid)
 
 
 def detect_table(filename, page, prefix_path):
@@ -69,6 +86,69 @@ def detect_table(filename, page, prefix_path):
     return table_coords
 
 
+def process(prefix_path, start_time, pdf_file, quality, limit, capture_stdout, sid=None, socketio=None, mystdout=None):
+    # Create directories if non-existent
+    for path in ['', 'csv', 'detects', 'pages', 'cropped', 'debug']:
+        os.makedirs(os.path.join(prefix_path, 'output', path), exist_ok=True)
+
+    # Clear output directory
+    for path in ['csv', 'detects', 'pages', 'cropped', 'debug']:
+        clear_directory(os.path.join(prefix_path, 'output', path, '*'))
+
+    pages = convert_from_path(pdf_file, quality)
+
+    if limit == -1:
+        limit = len(pages)
+
+    console_prefix = ""
+    flag = False
+    for page_index, page in enumerate(pages[:limit]):
+        print(f'Processing page number {page_index + 1}')
+        image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
+        page.save(image_path, 'PNG')  # Save page as an image
+
+        detected_cont = detect_table(image_path, page_index, prefix_path)
+
+        if detected_cont != Rect(0, 0, 0, 0):
+            image = cv2.imread(image_path)
+            cropped = image[detected_cont.y:detected_cont.y + detected_cont.h,
+                      detected_cont.x:detected_cont.x + detected_cont.w]
+
+            cropped_filename = f"{prefix_path}output/cropped/cropped_table_{page_index + 1}.jpg"
+            cv2.imwrite(cropped_filename, cropped)
+
+            if capture_stdout:
+                flag = True
+                console_prefix = console_prefix + mystdout.getvalue()
+                mystdout = convert_to_csv(cropped_filename,
+                                          f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv", True,
+                                          start_time, socketio, sid, console_prefix)
+            else:
+                convert_to_csv(cropped_filename, f"output/csv/export_table_page_{page_index}.csv", False)
+
+            print('CSV file saved\n')
+
+        else:
+            print('No tables on this page\n')
+
+        if capture_stdout and flag:
+            emit_console(start_time, console_prefix + mystdout.getvalue(), sid, socketio)
+
+
+def show_progress(block_num, block_size, total_size):
+    global pbar
+    if pbar is None:
+        pbar = progressbar.ProgressBar(maxval=total_size)
+        pbar.start()
+
+    downloaded = block_num * block_size
+    if downloaded < total_size:
+        pbar.update(downloaded)
+    else:
+        pbar.finish()
+        pbar = None
+
+
 if __name__ == '__main__':
     quality = int(args["quality"])
     if quality < 200:
@@ -79,40 +159,16 @@ if __name__ == '__main__':
         if input().lower() != 'n':
             quality = 200
 
-    # Clear output directory
-    clear_directory(f'output/csv/*')
-    clear_directory(f'output/detects/*')
-    clear_directory(f'output/pages/*')
-    clear_directory(f'output/cropped/*')
-
     pdf_file = ""
     if args["input"] == "":
         # Remote file
         pdf_file = "output/remote_document.pdf"
-        urllib.request.urlretrieve(args["remote"], pdf_file)
+        print("File download started")
+        urllib.request.urlretrieve(args["remote"], pdf_file, show_progress)
+        print()
     else:
         # Local file
         pdf_file = args["input"]
 
-    pages = convert_from_path(pdf_file, quality)
-
-    if args["limit"] == -1:
-        args["limit"] = len(pages)
-
-    for page_index, page in enumerate(pages[:int(args["limit"])]):
-        print(f'Processing page number {page_index}')
-        image_path = f'output/pages/page_{page_index}.jpg'
-        page.save(image_path, 'PNG')  # Save page as an image
-
-        detected_cont = detect_table(image_path, page_index, '')
-
-        if detected_cont != Rect(0, 0, 0, 0):
-            image = cv2.imread(image_path)
-            cropped = image[detected_cont.y:detected_cont.y + detected_cont.h, detected_cont.x:detected_cont.x + detected_cont.w]
-            cropped_filename = f"output/cropped/cropped_table_{page_index}.jpg"
-            cv2.imwrite(cropped_filename, cropped)
-
-            # Convert to csv
-            convert_to_csv(cropped_filename, f"output/csv/export_table_page_{page_index}.csv")
-        else:
-            print('No tables on this page')
+    start_time = int(time.time() * 1000)  # Current time in milliseconds
+    process('', start_time, pdf_file, quality, int(args["limit"]), False)
