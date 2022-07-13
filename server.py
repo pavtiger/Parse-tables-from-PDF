@@ -6,14 +6,13 @@ import sys
 from io import StringIO
 from queue import Queue
 from threading import Thread
-import progressbar
 
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 import eventlet
-from flask import Flask, send_from_directory, send_file, render_template, Response, request, g
+from flask import Flask, send_from_directory, render_template, request
 
 from config import ip_address, port, server_quality
-from main import detect_table, Rect, clear_directory, emit_console, process
+from main import emit_console, process
 
 
 # Init app
@@ -68,6 +67,9 @@ def root():
 
 @socketio.on('send')
 def get_data(message):
+    if not message['link'].lower().startswith('http'):
+        return
+
     if not process_queue.empty():
         socketio.emit('progress', {'stdout': 'Server busy', 'time': 0}, room=request.sid)
 

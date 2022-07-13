@@ -7,20 +7,18 @@ You can use this tool by either directly running the python script along with so
 Here's the front page
 ![image](https://user-images.githubusercontent.com/36619129/176673780-6ea4bd77-7f36-42f2-bfba-b199e533f29f.png)
 
-
 ## Installation
 Linux
-```
+```shell
 sudo apt install tesseract-ocr tesseract-ocr-rus
-sudo pip3 install pytesseract opencv-python tqdm
+sudo pip3 install pytesseract opencv-python tqdm progressbar
 ```
 
 Windows
-* Download tesseract exe from https://github.com/UB-Mannheim/tesseract/wiki.
-* Install this exe in C:\Program Files (x86)\Tesseract-OCR
-* Open virtual machine command prompt in windows or anaconda prompt.
-* Run `pip install pytesseract`
-
+*  Download tesseract exe from https://github.com/UB-Mannheim/tesseract/wiki.
+*  Install this exe in C:\Program Files (x86)\Tesseract-OCR
+*  Open virtual machine command prompt in windows or anaconda prompt.
+*  Run `pip install pytesseract`
 
 ## Running
 From local PDF file
@@ -41,7 +39,7 @@ python3 main.py --input example/rencap2021.pdf --limit 10 --quality 300
 ```
 
 All availible flags:
-* _input_ - Path to input pdf file to convert
-* _remote_ - Link to a remote location from where to obtain PDF file
-* _limit_ - Process only first N pages. (-1 if all)
-* _quality_ - PDF page render quality (default 200). Increasing will consume more RAM, but going under 200 is **highly unadvised**. This will cause recongision **errors**. For reference, 300 requires 8gb of RAM
+*  _input_ - Path to input pdf file to convert
+*  _remote_ - Link to a remote location from where to obtain PDF file
+*  _limit_ - Process only first N pages. (-1 if all)
+*  _quality_ - PDF page render quality (default 200). Increasing will consume more RAM, but going under 200 is **highly unadvised**. This will cause recongision **errors**. For reference, 300 requires 8gb of RAM

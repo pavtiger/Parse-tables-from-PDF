@@ -39,6 +39,14 @@ class Rect:
     h: int
 
 
+@dataclass
+class CaptureParams:
+    start_time: int = None
+    socketio: int = None
+    sid: int = None
+    console_prefix: str = None
+
+
 def clear_directory(path):
     files = glob(path)
     for f in files:
@@ -69,7 +77,7 @@ def detect_table(filename, page, prefix_path):
     dilated_value = cv2.dilate(thresh_value, kernel, iterations=1)
     cv2.imwrite(f'{prefix_path}output/debug/dilated_value_{page}.jpg', dilated_value)
 
-    contours, hierarchy = cv2.findContours(dilated_value, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(dilated_value, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     max_space = 0
     table_coords = Rect(0, 0, 0, 0)
@@ -122,7 +130,7 @@ def process(prefix_path, start_time, pdf_file, quality, limit, capture_stdout, s
                 console_prefix = console_prefix + mystdout.getvalue()
                 mystdout = convert_to_csv(cropped_filename,
                                           f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv", True,
-                                          start_time, socketio, sid, console_prefix)
+                                          CaptureParams(start_time, socketio, sid, console_prefix))
             else:
                 convert_to_csv(cropped_filename, f"output/csv/export_table_page_{page_index}.csv", False)
 

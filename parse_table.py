@@ -23,15 +23,9 @@ DEBUG_MODE = False
 BAR_LENGTH = 50
 
 
-def emit_console(start_time, message, sid, socketio):
-    current_time = int(time.time() * 1000)
-    socketio.emit('progress', {
-        'time': current_time - start_time,
-        'stdout': message
-    }, room=sid)
 
 
-class cell:
+class Cell:
     def __init__(self, x, y, w, h, text):
         self.x = x
         self.y = y
@@ -74,9 +68,8 @@ def emit_console(start_time, message, sid, socketio):
     }, room=sid)
 
 
-def convert_to_csv(filename, output_path, capture_stdout, start_time=None, socketio=None, sid=None, console_prefix=None):
-    if start_time is None:
-        start_time = int(time.time() * 1000)
+def convert_to_csv(filename, output_path, capture_stdout, capture_params=None):
+    start_time = int(time.time() * 1000)
 
     last_post_time = start_time
 
@@ -151,7 +144,7 @@ def convert_to_csv(filename, output_path, capture_stdout, start_time=None, socke
             row = []
 
         last_y = y
-        row.append(cell(x, y, w, h, text))
+        row.append(Cell(x, y, w, h, text))
 
         if DEBUG_MODE:  # Show a window with the image we are trying to recognise
             cv2.namedWindow("output", cv2.WINDOW_NORMAL)  # Create window with freedom of dimensions
@@ -164,7 +157,7 @@ def convert_to_csv(filename, output_path, capture_stdout, start_time=None, socke
             print(progress_bar.ljust(BAR_LENGTH, '⬜'))
 
             if current_time - last_post_time > 1000:
-                emit_console(start_time, console_prefix + mystdout.getvalue(), sid, socketio)
+                emit_console(capture_params.start_time, capture_params.console_prefix + mystdout.getvalue(), capture_params.sid, capture_params.socketio)
 
                 last_post_time = current_time
 
