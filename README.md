@@ -1,4 +1,7 @@
 # Parse tables from PDF
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c4359133095e40e89611e46dd48beed3)](https://app.codacy.com/gh/pavtiger/Parse-tables-from-PDF?utm_source=github.com&utm_medium=referral&utm_content=pavtiger/Parse-tables-from-PDF&utm_campaign=Badge_Grade_Settings)
+
 This tool was created to automize the process of pulling tables from PDF documents. It goes through all the pages, 
 recognises where tables are and then proceeds to transfer them to csv. Using pytesseract it parses text from each cell and determines its position in the table.
 
