@@ -18,11 +18,14 @@ except ImportError:
     import Image
 import pytesseract
 
+
 DEBUG_MODE = False
 BAR_LENGTH = 50
 
 
-class cell:
+
+
+class Cell:
     def __init__(self, x, y, w, h, text):
         self.x = x
         self.y = y
@@ -46,11 +49,8 @@ def imgread(im):
             image = Image.open(im)
         except FileExistsError:
             return None
-    try:
-        image = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
-    except:
-        return None
-    return image
+
+    return cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
 
 
 def extract_value(x):
@@ -65,7 +65,9 @@ def emit_console(start_time, message, sid, socketio):
     }, room=sid)
 
 
-def convert_to_csv(filename, output_path, socketio=None, mystdout=None, sid=None, start_time=None, console_prefix=None):
+def convert_to_csv(filename, output_path, capture_stdout, capture_params=None):
+    start_time = int(time.time() * 1000)
+
     last_post_time = start_time
 
     im = imgread(filename)
@@ -101,8 +103,8 @@ def convert_to_csv(filename, output_path, socketio=None, mystdout=None, sid=None
     thick_table = cv2.dilate(table, kernel, iterations=1)  # Thicken mask
 
     raw_image = im
-    for i in range(len(thick_table)):
-        for j in range(len(thick_table[i])):
+    for i, _ in enumerate(thick_table):
+        for j, _ in enumerate(thick_table[i]):
             if thick_table[i][j] == 255:
                 raw_image[i][j] = 255
 
@@ -110,10 +112,11 @@ def convert_to_csv(filename, output_path, socketio=None, mystdout=None, sid=None
     row_index = 0
     table_array, row = [], []
 
-    sys.stdout = mystdout = StringIO()
+    if capture_stdout:
+        sys.stdout = mystdout = StringIO()
 
     # Iterate over all contours and recognise text inside
-    for ind, cnt in enumerate(cont):
+    for ind, cnt in [enumerate(tqdm(cont)), enumerate(cont)][capture_stdout]:
         x, y, w, h = cv2.boundingRect(cnt)
         if (w * h) > (width * height * 0.75):
             continue  # Continue if the contour is the whole table
@@ -138,23 +141,24 @@ def convert_to_csv(filename, output_path, socketio=None, mystdout=None, sid=None
             row = []
 
         last_y = y
-        row.append(cell(x, y, w, h, text))
+        row.append(Cell(x, y, w, h, text))
 
         if DEBUG_MODE:  # Show a window with the image we are trying to recognise
             cv2.namedWindow("output", cv2.WINDOW_NORMAL)  # Create window with freedom of dimensions
             cv2.imshow("output", cropped_image)  # Show image
             cv2.waitKey(0)
 
-        progress_bar = '⬛' * int(BAR_LENGTH * (ind / len(cont)))
-        print(progress_bar.ljust(BAR_LENGTH, '⬜'))
-
         current_time = int(time.time() * 1000)
-        if current_time - last_post_time > 1000 and sid != None:
-            emit_console(start_time, console_prefix + mystdout.getvalue(), sid, socketio)
+        if capture_stdout:
+            progress_bar = '⬛' * int(BAR_LENGTH * (ind / len(cont)))
+            print(progress_bar.ljust(BAR_LENGTH, '⬜'))
 
-            last_post_time = current_time
+            if current_time - last_post_time > 1000:
+                emit_console(capture_params.start_time, capture_params.console_prefix + mystdout.getvalue(), capture_params.sid, capture_params.socketio)
 
-        if ind != len(cnt) - 1: sys.stdout = mystdout = StringIO()
+                last_post_time = current_time
+
+            if ind != len(cnt) - 1: sys.stdout = mystdout = StringIO()
 
     for i in range(len(table_array)):
         table_array[i].sort()  # Sort cells in every row to get the correct order (initially it's not the correct)
@@ -168,10 +172,10 @@ def convert_to_csv(filename, output_path, socketio=None, mystdout=None, sid=None
     df = pd.DataFrame(table_array)
     df.to_csv(output_path)
 
-    return mystdout
+    if capture_stdout:
+        return mystdout
 
 
 if __name__ == '__main__':
     filename = "example/cropped/cropped_table_8.jpg"
-
-    convert_to_csv(filename, 'dataframe.csv')
+    convert_to_csv(filename, 'dataframe.csv', False)

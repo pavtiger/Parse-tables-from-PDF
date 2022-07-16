@@ -7,12 +7,11 @@ You can use this tool by either directly running the python script along with so
 Here's the front page
 ![image](https://user-images.githubusercontent.com/36619129/176673780-6ea4bd77-7f36-42f2-bfba-b199e533f29f.png)
 
-
 ## Installation
 Linux
-```
+```shell
 sudo apt install tesseract-ocr tesseract-ocr-rus
-sudo pip3 install pytesseract opencv-python tqdm
+sudo pip3 install pytesseract opencv-python tqdm progressbar
 ```
 
 Windows
@@ -21,22 +20,21 @@ Windows
 * Open virtual machine command prompt in windows or anaconda prompt.
 * Run `pip install pytesseract`
 
-
 ## Running
 From local PDF file
-```
+```shell
 python3 main.py --input example/rencap2021.pdf --limit 10
 ```
 
 And from remote PDF file
-```
+```shell
 python3 main.py --remote https://www.renbroker.ru/storage/uploads/2022/02/24/6217a2faacba6-_2021_1.pdf --limit 10
 ```
 
 All data will output to `output/` directory. You can find example results in `example/`.
 
 You can also change the render quality (>= 200)
-```
+```shell
 python3 main.py --input example/rencap2021.pdf --limit 10 --quality 300
 ```
 

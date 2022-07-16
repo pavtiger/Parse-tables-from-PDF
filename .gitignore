@@ -141,4 +141,4 @@ static/output/detects/*
 static/output/pages/*
 static/output/debug/*
 
-ip.py
+config.py
