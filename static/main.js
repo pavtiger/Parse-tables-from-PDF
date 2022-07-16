@@ -5,7 +5,8 @@ socket.on("progress", function(message) {
     console.log(message);
 
     let timer = document.getElementById("timer");
-    timer.innerHTML = "Time elapsed: " + Math.round(message["time"] / 1000) + " seconds";
+    timer.innerHTML =
+        "Time elapsed: " + Math.round(message["time"] / 1000) + " seconds";
 
     let terminal = document.getElementById("console");
     terminal.innerHTML = message["stdout"];

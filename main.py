@@ -71,7 +71,7 @@ def detect_table(filename, page, prefix_path):
 
     shape = im.shape
 
-    ret, thresh_value = cv2.threshold(im1, 200, 255, cv2.THRESH_BINARY_INV)
+    _, thresh_value = cv2.threshold(im1, 200, 255, cv2.THRESH_BINARY_INV)
 
     kernel = np.ones((5, 5), np.uint8)
     dilated_value = cv2.dilate(thresh_value, kernel, iterations=1)

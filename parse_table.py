@@ -49,11 +49,8 @@ def imgread(im):
             image = Image.open(im)
         except FileExistsError:
             return None
-    try:
-        image = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
-    except:
-        return None
-    return image
+
+    return cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
 
 
 def extract_value(x):
@@ -106,8 +103,8 @@ def convert_to_csv(filename, output_path, capture_stdout, capture_params=None):
     thick_table = cv2.dilate(table, kernel, iterations=1)  # Thicken mask
 
     raw_image = im
-    for i in range(len(thick_table)):
-        for j in range(len(thick_table[i])):
+    for i, _ in enumerate(thick_table):
+        for j, _ in enumerate(thick_table[i]):
             if thick_table[i][j] == 255:
                 raw_image[i][j] = 255
 
