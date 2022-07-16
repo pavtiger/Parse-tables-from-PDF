@@ -116,7 +116,12 @@ def convert_to_csv(filename, output_path, capture_stdout, capture_params=None):
         sys.stdout = mystdout = StringIO()
 
     # Iterate over all contours and recognise text inside
-    for ind, cnt in [enumerate(tqdm(cont)), enumerate(cont)][capture_stdout]:
+    if capture_stdout:
+        iterate_obj = enumerate(cont)
+    else:
+        iterate_obj = enumerate(tqdm(cont))
+
+    for ind, cnt in iterate_obj:
         x, y, w, h = cv2.boundingRect(cnt)
         if (w * h) > (width * height * 0.75):
             continue  # Continue if the contour is the whole table
