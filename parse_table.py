@@ -35,7 +35,8 @@ class Cell:
 
     def __lt__(self, other):
         """
-        Function to compare
+        Function to compare multiple cell objects
+
         :param other:
         :return:
         """

@@ -12,14 +12,15 @@ import eventlet
 from flask import Flask, send_from_directory, render_template, request
 
 from config import ip_address, port, server_quality
-from main import emit_console, process, log
-from global_data import connected
+from main import emit_console, process
+# from global_data import connected
 
 
 # Init app
 app = Flask(__name__, static_url_path='')
 socketio = SocketIO(app)
 process_queue = Queue()
+user_connected = dict()
 
 BAR_LENGTH = 50
 
@@ -35,10 +36,10 @@ def process_by_link(link, quality, limit, sid):
     start_time = int(time.time() * 1000)  # Current time in milliseconds
     emit_console(start_time, mystdout.getvalue(), sid, socketio)
 
-    pdf_file = "output/remote_document.pdf"
+    pdf_file = f"output/remote_document.pdf"
     urllib.request.urlretrieve(link, pdf_file)
 
-    process(prefix_path, start_time, pdf_file, quality, int(limit), True, sid, socketio, mystdout)
+    process(prefix_path, start_time, pdf_file, quality, int(limit), True, sid, socketio, mystdout, user_connected)
 
     # Send download paths
     target_directory = f'{prefix_path}output/csv'
@@ -68,7 +69,7 @@ def root():
 
 @socketio.event
 def connect():
-    connected[request.sid] = True
+    user_connected[request.sid] = True
 
 
 @socketio.event
@@ -78,7 +79,7 @@ def connect_error(data):
 
 @socketio.event
 def disconnect():
-    connected[request.sid] = False
+    user_connected[request.sid] = False
 
 
 @socketio.on('send')
@@ -100,7 +101,6 @@ def send_js(path):
 
 def game_loop():
     while True:
-        # log(process_queue)
         if not process_queue.empty():
             item = process_queue.get()
             print(f'Started processing of {item}')
