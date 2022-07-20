@@ -12,7 +12,8 @@ import eventlet
 from flask import Flask, send_from_directory, render_template, request
 
 from config import ip_address, port, server_quality
-from main import emit_console, process
+from main import emit_console, process, log
+from global_data import connected
 
 
 # Init app
@@ -65,6 +66,21 @@ def root():
     return render_template('main.html')
 
 
+@socketio.event
+def connect():
+    connected[request.sid] = True
+
+
+@socketio.event
+def connect_error(data):
+    print("The connection failed!")
+
+
+@socketio.event
+def disconnect():
+    connected[request.sid] = False
+
+
 @socketio.on('send')
 def get_data(message):
     if not message['link'].lower().startswith('http'):
@@ -84,8 +100,11 @@ def send_js(path):
 
 def game_loop():
     while True:
-        if process_queue.empty() > 0:
+        # log(process_queue)
+        if not process_queue.empty():
             item = process_queue.get()
+            print(f'Started processing of {item}')
+
             process_by_link(item['message']['link'], server_quality, item['message']['limit'], item['sid'])
             process_queue.task_done()
 

@@ -18,11 +18,8 @@ except ImportError:
     import Image
 import pytesseract
 
-
 DEBUG_MODE = False
 BAR_LENGTH = 50
-
-
 
 
 class Cell:
@@ -37,6 +34,11 @@ class Cell:
         return (self.x + self.w / 2) <= (other.x + other.w / 2)
 
     def __lt__(self, other):
+        """
+        Function to compare
+        :param other:
+        :return:
+        """
         return (self.x + self.w / 2) < (other.x + other.w / 2)
 
 
@@ -159,13 +161,14 @@ def convert_to_csv(filename, output_path, capture_stdout, capture_params=None):
             print(progress_bar.ljust(BAR_LENGTH, '⬜'))
 
             if current_time - last_post_time > 1000:
-                emit_console(capture_params.start_time, capture_params.console_prefix + mystdout.getvalue(), capture_params.sid, capture_params.socketio)
+                emit_console(capture_params.start_time, capture_params.console_prefix + mystdout.getvalue(),
+                             capture_params.sid, capture_params.socketio)
 
                 last_post_time = current_time
 
             if ind != len(cnt) - 1: sys.stdout = mystdout = StringIO()
 
-    for i in range(len(table_array)):
+    for i, _ in enumerate(table_array):
         table_array[i].sort()  # Sort cells in every row to get the correct order (initially it's not the correct)
 
     for i in range(len(table_array)):

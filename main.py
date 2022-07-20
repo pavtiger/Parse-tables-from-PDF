@@ -12,7 +12,7 @@ import numpy as np
 from pdf2image import convert_from_path
 
 from parse_table import convert_to_csv
-
+from global_data import connected
 
 # Important notice: This script assumes that there is a maximum of 1 table in a page (from research is seems to be true)
 
@@ -45,6 +45,11 @@ class CaptureParams:
     socketio: int = None
     sid: int = None
     console_prefix: str = None
+
+
+def log(text):
+    with open('log', 'a') as f:
+        f.write(str(text))
 
 
 def clear_directory(path):
@@ -141,6 +146,9 @@ def process(prefix_path, start_time, pdf_file, quality, limit, capture_stdout, s
 
         if capture_stdout and flag:
             emit_console(start_time, console_prefix + mystdout.getvalue(), sid, socketio)
+            if not connected[sid]:
+                log('Client disconnected')
+                break
 
 
 def show_progress(block_num, block_size, total_size):

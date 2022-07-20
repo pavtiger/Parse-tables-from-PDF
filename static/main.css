@@ -9,6 +9,7 @@
     font-size: 20px;
 
     display: flex;
+    overflow-y: scroll;
     justify-content: center;
     align-items: center;
 }

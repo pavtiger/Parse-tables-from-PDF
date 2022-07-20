@@ -141,4 +141,5 @@ static/output/detects/*
 static/output/pages/*
 static/output/debug/*
 
+log
 config.py
