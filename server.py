@@ -4,7 +4,6 @@ from glob import glob
 import urllib.request
 import sys
 from io import StringIO
-from queue import Queue
 from threading import Thread
 
 from flask_socketio import SocketIO
@@ -12,14 +11,15 @@ import eventlet
 from flask import Flask, send_from_directory, render_template, request
 
 from config import ip_address, port, server_quality
-from main import emit_console, process
-# from global_data import connected
+from main import emit_console, process, clear_directory
 
 
 # Init app
 app = Flask(__name__, static_url_path='')
 socketio = SocketIO(app)
-process_queue = Queue()
+process_queue = list()
+process_index = -1
+
 user_connected = dict()
 
 BAR_LENGTH = 50
@@ -29,14 +29,13 @@ def process_by_link(link, quality, limit, sid):
     backup = sys.stdout
     sys.stdout = mystdout = StringIO()
 
-    print('Processing started')
-    print(' ' * BAR_LENGTH)
+    print('Processing started\n')
     console_prefix, prefix_path = '', 'static/'
 
     start_time = int(time.time() * 1000)  # Current time in milliseconds
     emit_console(start_time, mystdout.getvalue(), sid, socketio)
 
-    pdf_file = f"output/remote_document.pdf"
+    pdf_file = f"output/remote_document_{process_index}.pdf"
     urllib.request.urlretrieve(link, pdf_file)
 
     process(prefix_path, start_time, pdf_file, quality, int(limit), True, sid, socketio, mystdout, user_connected)
@@ -87,10 +86,15 @@ def get_data(message):
     if not message['link'].lower().startswith('http'):
         return
 
-    if not process_queue.empty():
+    if len(process_queue) > 0:
+        for elem in process_queue:
+            if elem['sid'] == request.sid:
+                socketio.emit('progress', {'stdout': 'You already have an ongoing request', 'time': 0}, room=request.sid)
+                return
+
         socketio.emit('progress', {'stdout': 'Server busy', 'time': 0}, room=request.sid)
 
-    process_queue.put({'sid': request.sid, 'message': message})
+    process_queue.append({'sid': request.sid, 'message': message})
 
 
 # Get files from server (e.g libs)
@@ -99,22 +103,26 @@ def send_js(path):
     return send_from_directory('js', path)
 
 
-def game_loop():
+def process_caller():
+    global process_index, process_queue
+
     while True:
-        if not process_queue.empty():
-            item = process_queue.get()
+        if process_index + 1 < len(process_queue):
+            item = process_queue[process_index]
+            process_queue.append(item)
             print(f'Started processing of {item}')
 
             process_by_link(item['message']['link'], server_quality, item['message']['limit'], item['sid'])
-            process_queue.task_done()
+            process_index += 1
 
         time.sleep(1)
 
 
 if __name__ == "__main__":
     eventlet.monkey_patch()
+    clear_directory('output/remote_document_*')
 
-    x = Thread(target=game_loop, args=())
+    x = Thread(target=process_caller, args=())
     x.start()
 
     print(f"Listening on http://{ip_address}:{port}")

@@ -34,12 +34,6 @@ class Cell:
         return (self.x + self.w / 2) <= (other.x + other.w / 2)
 
     def __lt__(self, other):
-        """
-        Function to compare multiple cell objects
-
-        :param other:
-        :return:
-        """
         return (self.x + self.w / 2) < (other.x + other.w / 2)
 
 
