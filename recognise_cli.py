@@ -48,7 +48,7 @@ class CaptureParams:
 
 def log(text):
     with open('log', 'a') as f:
-        f.write(str(text))
+        f.write(str(text) + '\n')
 
 
 def clear_directory(path):

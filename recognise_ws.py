@@ -11,7 +11,7 @@ import eventlet
 from flask import Flask, send_from_directory, render_template, request
 
 from config import ip_address, port, server_quality
-from main import emit_console, process, clear_directory
+from recognise_cli import emit_console, process, clear_directory
 
 
 # Init app
