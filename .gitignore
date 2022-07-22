@@ -129,11 +129,7 @@ dmypy.json
 .pyre/
 
 dataframe.csv
-output/cropped/*
-output/csv/*
-output/detects/*
-output/pages/*
-output/debug/*
+output/*
 
 static/output/cropped/*
 static/output/csv/*
@@ -141,4 +137,5 @@ static/output/detects/*
 static/output/pages/*
 static/output/debug/*
 
+log
 config.py
