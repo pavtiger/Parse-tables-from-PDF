@@ -15,7 +15,7 @@ Linux using `apt`
 ```shell
 # Required
 sudo apt install tesseract-ocr tesseract-ocr-rus
-sudo pip install pytesseract opencv-python tqdm progressbar
+sudo pip install pytesseract opencv-python tqdm progressbar pdf2image
 
 # Optional for webserver
 sudo pip install flask flask-socketio eventlet
