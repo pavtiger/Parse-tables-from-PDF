@@ -37,7 +37,7 @@ python3 recognise_cli.py --input example/rencap2021.pdf --limit 10
 
 And from remote PDF file
 ```shell
-python3 recognise_cli.py --remote https://www.renbroker.ru/storage/uploads/2022/02/24/6217a2faacba6-_2021_1.pdf --limit 10
+python3 recognise_cli.py --remote https://github.com/pavtiger/Parse-tables-from-PDF/raw/master/example/rencap2021.pdf --limit 10
 ```
 
 All data will output to `output/` directory. You can find example results in `example/`.

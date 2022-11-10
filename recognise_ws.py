@@ -5,6 +5,7 @@ import urllib.request
 import sys
 from io import StringIO
 from threading import Thread
+from collections import deque
 
 from flask_socketio import SocketIO
 import eventlet
@@ -17,7 +18,7 @@ from recognise_cli import emit_console, process, clear_directory
 # Init app
 app = Flask(__name__, static_url_path='')
 socketio = SocketIO(app)
-process_queue = list()
+process_queue = deque()
 process_index = -1
 
 user_connected = dict()
@@ -25,19 +26,36 @@ user_connected = dict()
 BAR_LENGTH = 50
 
 
+def check_if_url_exists(url):
+    try:
+        u = urllib.request.urlopen(url)
+        u.close()
+        return True
+    except:
+        return False
+
+
 def process_by_link(link, quality, limit, sid):
     backup = sys.stdout
     sys.stdout = mystdout = StringIO()
 
-    print('Processing started\n')
     console_prefix, prefix_path = '', 'static/'
-
     start_time = int(time.time() * 1000)  # Current time in milliseconds
-    emit_console(start_time, mystdout.getvalue(), sid, socketio)
 
     pdf_file = f"output/remote_document_{process_index}.pdf"
-    urllib.request.urlretrieve(link, pdf_file)
+    if check_if_url_exists(link):
+        urllib.request.urlretrieve(link, pdf_file)
+        print('Processing started\n')
+        emit_console(start_time, mystdout.getvalue(), sid, socketio)
 
+    else:
+        print('There is a problem loading file from this link. Check if it is correct')
+        emit_console(start_time, mystdout.getvalue(), sid, socketio)
+        
+        sys.stdout = backup
+        return False
+
+    # Main spreadsheet processing
     process(prefix_path, start_time, pdf_file, quality, int(limit), True, sid, socketio, mystdout, user_connected)
 
     # Send download paths
@@ -58,6 +76,7 @@ def process_by_link(link, quality, limit, sid):
 
     socketio.emit('download', paths, room=sid)
     sys.stdout = backup
+    return True
 
 
 # Return main page
@@ -107,13 +126,15 @@ def process_caller():
     global process_index, process_queue
 
     while True:
-        if process_index + 1 < len(process_queue):
-            item = process_queue[process_index]
-            process_queue.append(item)
+        if len(process_queue) > 0:
+            item = process_queue[0]
             print(f'Started processing of {item}')
 
             process_by_link(item['message']['link'], server_quality, item['message']['limit'], item['sid'])
+            print(f'Processing ended')
+            
             process_index += 1
+            process_queue.popleft()
 
         time.sleep(1)
 
