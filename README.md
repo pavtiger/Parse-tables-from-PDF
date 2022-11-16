@@ -32,24 +32,24 @@ Windows
 ### Running locally
 From PDF file
 ```shell
-python3 recognise_cli.py --input example/rencap2021.pdf --limit 10
+python3 recognise.py --client --input example/rencap2021.pdf --limit 10
 ```
 
 And from remote PDF file
 ```shell
-python3 recognise_cli.py --remote https://www.renbroker.ru/storage/uploads/2022/02/24/6217a2faacba6-_2021_1.pdf --limit 10
+python3 recognise.py --client --remote https://github.com/pavtiger/Parse-tables-from-PDF/raw/master/example/rencap2021.pdf --limit 10
 ```
 
 All data will output to `output/` directory. You can find example results in `example/`.
 
 You can also change the render quality (>= 200)
 ```shell
-python3 recognise_cli.py --input example/rencap2021.pdf --limit 10 --quality 300
+python3 recognise.py --client --input example/rencap2021.pdf --limit 10 --quality 300
 ```
 
 ### Running web server
 ```shell
-python3 recognise_ws.py
+python3 recognise.py --server
 ```
 
 All available flags:
