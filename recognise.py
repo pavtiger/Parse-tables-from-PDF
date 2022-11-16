@@ -142,7 +142,7 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
             cv2.imwrite(cropped_filename, cropped)
 
             convert_to_csv(cropped_filename, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
-                           capture_stdout, socketio, sid)
+                           user_connected, capture_stdout, socketio, sid)
 
             emit_message('CSV file saved\n', sid, capture_stdout)
 
@@ -201,6 +201,11 @@ def connect_error(data):
 
 @socketio.event
 def disconnect():
+    user_connected[request.sid] = False
+
+
+@socketio.event
+def stop():
     user_connected[request.sid] = False
 
 

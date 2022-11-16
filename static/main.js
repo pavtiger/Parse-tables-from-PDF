@@ -43,6 +43,12 @@ form.addEventListener("submit", (e) => {
 });
 
 
+form.addEventListener("reset", (e) => {
+    e.preventDefault();
+    socket.emit("stop")
+});
+
+
 setInterval(function() {
     if (processing_in_progress) {
         let timer = document.getElementById("timer");
