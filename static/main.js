@@ -43,7 +43,7 @@ form.addEventListener("submit", (e) => {
 });
 
 
-let update_clock = setInterval(function() {
+setInterval(function() {
     if (processing_in_progress) {
         let timer = document.getElementById("timer");
         timer.innerHTML = "Time elapsed: " + Math.round((Date.now() - start_time) / 1000) + " seconds";

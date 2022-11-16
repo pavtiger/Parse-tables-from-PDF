@@ -3,8 +3,6 @@ import os
 from glob import glob
 import urllib.request
 import argparse
-import sys
-from io import StringIO
 from dataclasses import dataclass
 from threading import Thread
 from collections import deque
@@ -21,6 +19,7 @@ from flask import Flask, send_from_directory, render_template, request
 from config import ip_address, port, server_quality
 from parse_table import convert_to_csv
 
+
 # Important notice: This script assumes that there is a maximum of 1 table in a page (from research is seems to be true)
 ap = argparse.ArgumentParser()
 ap.add_argument("-s", "--server", action='store_true')
@@ -36,6 +35,7 @@ ap.add_argument("-q", "--quality", required=False,
                 default=200)  # For instance, 300 requires ~8gb RAM
 
 args = vars(ap.parse_args())
+
 
 # Init app
 pbar = None
@@ -62,7 +62,9 @@ def check_if_url_exists(url):
         u = urllib.request.urlopen(url)
         u.close()
         return True
-    except:
+
+    except urllib.error.HTTPError:
+        print('error')
         return False
 
 
@@ -152,7 +154,7 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
 
 
 def process_by_link(link, quality, limit, sid):
-    console_prefix, prefix_path = '', 'static/'
+    prefix_path = 'static/'
     emit_message('Downloading document\n', sid)
 
     pdf_file = f"output/remote_document_{process_index}.pdf"
@@ -234,7 +236,7 @@ def process_caller():
             print(f'Started processing of {item}')
 
             process_by_link(item['message']['link'], server_quality, item['message']['limit'], item['sid'])
-            print(f'Processing ended')
+            print('Processing ended')
 
             process_index += 1
             process_queue.popleft()
