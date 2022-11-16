@@ -1,5 +1,6 @@
 let socket = io("http://" + window.location.hostname + ":" + window.location.port);
 let terminal_text = [], start_time, processing_in_progress = false;
+let form = document.forms.submit_link;
 
 
 socket.on("progress", function(message) {
