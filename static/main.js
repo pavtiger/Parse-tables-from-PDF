@@ -1,4 +1,4 @@
-let socket = io("http://" + window.location.hostname + ":" + window.location.port);
+const socket = io("http://" + window.location.hostname + ":" + window.location.port);
 let terminal_text = [], start_time, processing_in_progress = false;
 let form = document.forms.submit_link;
 
@@ -18,7 +18,7 @@ socket.on("delete_row", function() {
 
 
 socket.on("download", function(paths) {
-    paths.forEach(function (path, index) {
+    paths.forEach(function (path) {
         let a = document.createElement("a");
         a.href = path;
         a.download = path.split("/").pop();
