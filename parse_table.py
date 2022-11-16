@@ -54,7 +54,7 @@ def extract_value(x):
     return x[0].text
 
 
-def convert_to_csv(filename, output_path, capture_stdout, socketio=None, sid=None):
+def convert_to_csv(filename, output_path, user_connected, capture_stdout, socketio=None, sid=None):
     start_time = int(time.time() * 1000)
 
     im = imgread(filename)
@@ -144,6 +144,9 @@ def convert_to_csv(filename, output_path, capture_stdout, socketio=None, sid=Non
             }, room=sid)
 
             socketio.emit('delete_row', room=sid)
+
+        if user_connected is not None and not user_connected[sid]:
+            break
 
     for i, _ in enumerate(table_array):
         table_array[i].sort()  # Sort cells in every row to get the correct order (initially it's not the correct)

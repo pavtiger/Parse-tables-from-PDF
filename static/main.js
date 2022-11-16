@@ -1,5 +1,6 @@
 let socket = io("http://" + window.location.hostname + ":" + window.location.port);
 let terminal_text = [], start_time, processing_in_progress = false;
+let form = document.forms.submit_link;
 
 
 socket.on("progress", function(message) {
@@ -40,6 +41,12 @@ form.addEventListener("submit", (e) => {
         dict[pair[0]] = pair[1];
     }
     socket.emit("send", dict)
+});
+
+
+form.addEventListener("reset", (e) => {
+    e.preventDefault();
+    socket.emit("stop")
 });
 
 
