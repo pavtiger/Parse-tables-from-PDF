@@ -1,15 +1,20 @@
 let socket = io("http://" + window.location.hostname + ":" + window.location.port);
+let terminal_text = [];
 
 
 socket.on("progress", function(message) {
-    console.log(message);
-
     let timer = document.getElementById("timer");
     timer.innerHTML =
-        "Time elapsed: " + Math.round(message["time"] / 1000) + " seconds";
+        "Time elapsed: None";
 
     let terminal = document.getElementById("console");
-    terminal.innerHTML = message["stdout"];
+    terminal_text.push(message["stdout"])
+    terminal.innerHTML = terminal_text.join("");
+});
+
+
+socket.on("delete_row", function() {
+    terminal_text.pop();
 });
 
 

@@ -54,18 +54,8 @@ def extract_value(x):
     return x[0].text
 
 
-def emit_console(start_time, message, sid, socketio):
-    current_time = int(time.time() * 1000)
-    socketio.emit('progress', {
-        'time': current_time - start_time,
-        'stdout': message
-    }, room=sid)
-
-
-def convert_to_csv(filename, output_path, capture_stdout, capture_params=None):
+def convert_to_csv(filename, output_path, capture_stdout, socketio=None, sid=None):
     start_time = int(time.time() * 1000)
-
-    last_post_time = start_time
 
     im = imgread(filename)
     width, height, _ = im.shape
@@ -109,9 +99,6 @@ def convert_to_csv(filename, output_path, capture_stdout, capture_params=None):
     row_index = 0
     table_array, row = [], []
 
-    if capture_stdout:
-        sys.stdout = mystdout = StringIO()
-
     # Iterate over all contours and recognise text inside
     if capture_stdout:
         iterate_obj = enumerate(cont)
@@ -150,18 +137,13 @@ def convert_to_csv(filename, output_path, capture_stdout, capture_params=None):
             cv2.imshow("output", cropped_image)  # Show image
             cv2.waitKey(0)
 
-        current_time = int(time.time() * 1000)
         if capture_stdout:
             progress_bar = '⬛' * int(BAR_LENGTH * (ind / len(cont)))
-            print(progress_bar.ljust(BAR_LENGTH, '⬜'))
+            socketio.emit('progress', {
+                'stdout': progress_bar.ljust(BAR_LENGTH, '⬜') + '\n'
+            }, room=sid)
 
-            if current_time - last_post_time > 1000:
-                emit_console(capture_params.start_time, capture_params.console_prefix + mystdout.getvalue(),
-                             capture_params.sid, capture_params.socketio)
-
-                last_post_time = current_time
-
-            if ind != len(cnt) - 1: sys.stdout = mystdout = StringIO()
+            socketio.emit('delete_row', room=sid)
 
     for i, _ in enumerate(table_array):
         table_array[i].sort()  # Sort cells in every row to get the correct order (initially it's not the correct)
@@ -174,11 +156,3 @@ def convert_to_csv(filename, output_path, capture_stdout, capture_params=None):
 
     df = pd.DataFrame(table_array)
     df.to_csv(output_path)
-
-    if capture_stdout:
-        return mystdout
-
-
-if __name__ == '__main__':
-    filename = "example/cropped/cropped_table_8.jpg"
-    convert_to_csv(filename, 'dataframe.csv', False)
