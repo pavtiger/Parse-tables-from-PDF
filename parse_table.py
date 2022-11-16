@@ -3,9 +3,7 @@ import io
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import sys
 import time
-from io import StringIO
 
 try:
     import urllib.request as urllib
@@ -55,8 +53,6 @@ def extract_value(x):
 
 
 def convert_to_csv(filename, output_path, user_connected, capture_stdout, socketio=None, sid=None):
-    start_time = int(time.time() * 1000)
-
     im = imgread(filename)
     width, height, _ = im.shape
 

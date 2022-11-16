@@ -1,11 +1,11 @@
 @font-face {
     font-family: terminal;
-    src: URL('/font.ttf') format('truetype');
+    src: url('/font.ttf') format('truetype');
 }
 
 #console {
-    white-space:pre-wrap;
-    font-family: terminal;
+    white-space: pre-wrap;
+    font-family: terminal, sans-serif;
     font-size: 20px;
 
     display: flex;
@@ -20,18 +20,16 @@
 }
 
 #timer {
-    font-family: terminal;
+    font-family: terminal, sans-serif;
     font-size: 25px;
-
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 #text {
-    font-family: terminal;
+    font-family: terminal, sans-serif;
     font-size: 35px;
-
     display: flex;
     justify-content: center;
     align-items: center;
