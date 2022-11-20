@@ -18,6 +18,9 @@ socket.on("delete_row", function() {
 
 
 socket.on("download", function(paths) {
+    let stop_button = document.getElementById("stop_button");
+    stop_button.style.color = "black";
+
     paths.forEach(function (path) {
         let a = document.createElement("a");
         a.href = path;
@@ -34,19 +37,35 @@ socket.on("download", function(paths) {
 form.addEventListener("submit", (e) => {
     e.preventDefault();
     start_time = Date.now();
+    let console = document.getElementById("console");
 
     let dict = {}
-    const formData = new FormData(document.querySelector("form"))
+    const formData = new FormData(document.querySelector("form"));
     for (let pair of formData.entries()) {
+        if (pair[0] === "link" && pair[1] === "") {
+            console.innerHTML = "The link you entered is incorrect. Check if it begins with http:// or https://";
+            return;
+        }
         dict[pair[0]] = pair[1];
     }
+
+    // Clear console
+    console.innerHTML = "";
+    terminal_text = [];
+
+    let stop_button = document.getElementById("stop_button");
+    stop_button.style.color = "red";
+
     socket.emit("send", dict)
 });
 
 
 form.addEventListener("reset", (e) => {
     e.preventDefault();
-    socket.emit("stop")
+
+    let stop_button = document.getElementById("stop_button");
+    stop_button.style.color = "black";
+    socket.emit("stop");
 });
 
 
@@ -55,4 +74,4 @@ setInterval(function() {
         let timer = document.getElementById("timer");
         timer.innerHTML = "Time elapsed: " + Math.round((Date.now() - start_time) / 1000) + " seconds";
     }
-}, 1000);
+}, 200);
