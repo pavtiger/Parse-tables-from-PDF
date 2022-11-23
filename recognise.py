@@ -123,8 +123,10 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
 
     pages = convert_from_path(pdf_file, quality)
 
-    if limit == -1:
+    if limit == "":
         limit = len(pages)
+    else:
+        limit = int(limit)
 
     for page_index, page in enumerate(pages[:limit]):
         emit_message(f'Processing page number {page_index + 1}', sid, capture_stdout)
@@ -167,7 +169,7 @@ def process_by_link(link, quality, limit, sid):
         return False
 
     # Main spreadsheet processing
-    process(prefix_path, pdf_file, quality, int(limit), True, sid, socketio, user_connected)
+    process(prefix_path, pdf_file, quality, limit, True, sid, socketio, user_connected)
 
     # Send download paths
     target_directory = f'{prefix_path}output/csv'
@@ -178,7 +180,7 @@ def process_by_link(link, quality, limit, sid):
     for i, path in enumerate(paths):
         paths[i] = path.replace(prefix_path, '')
 
-    emit_message("Starting download", sid)
+    emit_message("Processing finished, starting download", sid)
     socketio.emit('download', paths, room=sid)
     return True
 
