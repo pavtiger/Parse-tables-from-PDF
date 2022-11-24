@@ -15,12 +15,14 @@
     <body>
         <script src="/socket.io.min.js"></script>
 
-        <p id="text">Insert link for PDF file download</p>
+        <p id="text">Parse tables from PDF</p>
+        <p id="description">This tool was created to automize the process of pulling tables from PDF documents. It goes through all the pages, recognises where tables are and then proceeds to transfer them to csv. Using pytesseract it parses text from each cell and determines its position in the table.</p>
 
         <div>
             <form id="form" name="submit_link" action="" method="post">
-                <input type="text" id="link" name="link">
-                <input type="text" id="limit" name="limit" value="10">
+                <input type="text" id="link" name="link" placeholder="link for pdf file">
+
+                <input type="text" id="limit" name="limit" placeholder="page limit (leave empty for all)">
                 <input type="submit" value="Submit" style="background-color: -moz-default-background-color">
                 <input type="reset" id="stop_button" value="Stop"
                        style="background-color: -moz-default-background-color">

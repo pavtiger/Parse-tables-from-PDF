@@ -34,3 +34,13 @@
     justify-content: center;
     align-items: center;
 }
+
+#description {
+    font-family: terminal, sans-serif;
+    font-size: 16px;
+    margin-left: 20%;
+    margin-right: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
