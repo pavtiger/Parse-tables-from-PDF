@@ -21,12 +21,13 @@ BAR_LENGTH = 50
 
 
 class Cell:
-    def __init__(self, x, y, w, h, text):
+    def __init__(self, x, y, w, h, text, conf):
         self.x = x
         self.y = y
         self.w = w
         self.h = h
         self.text = text
+        self.conf = conf
 
     def __le___(self, other):
         return (self.x + self.w / 2) <= (other.x + other.w / 2)
@@ -52,7 +53,7 @@ def extract_value(x):
     return x[0].text
 
 
-def convert_to_csv(filename, output_path, user_connected, capture_stdout, socketio=None, sid=None):
+def convert_to_csv(filename, page_index, output_path, user_connected, capture_stdout, socketio=None, sid=None):
     im = imgread(filename)
     width, height, _ = im.shape
 
@@ -126,7 +127,11 @@ def convert_to_csv(filename, output_path, user_connected, capture_stdout, socket
             row = []
 
         last_y = y
-        row.append(Cell(x, y, w, h, text))
+
+        # text = text[text.conf != -1]
+        # lines = text.groupby('block_num')['text'].apply(list)
+        # conf = text.groupby(['block_num'])['conf'].mean()
+        row.append(Cell(x, y, w, h, text, 0))
 
         if DEBUG_MODE:  # Show a window with the image we are trying to recognise
             cv2.namedWindow("output", cv2.WINDOW_NORMAL)  # Create window with freedom of dimensions
@@ -134,15 +139,18 @@ def convert_to_csv(filename, output_path, user_connected, capture_stdout, socket
             cv2.waitKey(0)
 
         if capture_stdout:
-            progress_bar = '⬛' * int(BAR_LENGTH * (ind / len(cont)))
+            # progress_bar = '⬛' * int(BAR_LENGTH * (ind / len(cont)))
             socketio.emit('progress', {
-                'stdout': progress_bar.ljust(BAR_LENGTH, '⬜') + '\n'
+                'stdout': int(ind / len(cont) * 100),
+                'index': page_index
             }, room=sid)
-
-            socketio.emit('delete_row', room=sid)
 
         if user_connected is not None and not user_connected[sid]:
             break
+
+    # socketio.emit('send_table', {
+    #     'table': table_array,
+    # }, room=sid)
 
     for i, _ in enumerate(table_array):
         table_array[i].sort()  # Sort cells in every row to get the correct order (initially it's not the correct)

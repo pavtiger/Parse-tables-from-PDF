@@ -1,10 +1,35 @@
+html { overflow-y: scroll }
+canvas { width: 100%; height: 100%; }
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    color: floralwhite;
+    padding: 0;
+}
+
 @font-face {
     font-family: terminal;
     src: url('/font.ttf') format('truetype');
 }
 
 #console {
+    /*clear: both;*/
+    /*resize: none;*/
+    /*white-space: pre-wrap;*/
+    color: white;
+    font-family: terminal, sans-serif;
+    /*font-size: 20px;*/
+    /*display: flex;*/
+
+    /*display: flex;*/
+    /*justify-content: center;*/
+    /*align-items: center;*/
+}
+
+#init_info {
     white-space: pre-wrap;
+    color: white;
     font-family: terminal, sans-serif;
     font-size: 20px;
 
@@ -17,9 +42,12 @@
     display: flex;
     justify-content: center;
     align-items: center;
+
+    color: #22272E;
 }
 
 #timer {
+    color: white;
     font-family: terminal, sans-serif;
     font-size: 25px;
     display: flex;
@@ -28,6 +56,7 @@
 }
 
 #text {
+    color: white;
     font-family: terminal, sans-serif;
     font-size: 35px;
     display: flex;
@@ -35,12 +64,217 @@
     align-items: center;
 }
 
-#description {
+.description {
+    color: white;
     font-family: terminal, sans-serif;
     font-size: 16px;
-    margin-left: 20%;
-    margin-right: 20%;
-    display: flex;
-    justify-content: center;
+    /*margin-left: 20%;*/
+    /*margin-right: 20%;*/
+    /*display: flex;*/
+    /*justify-content: center;*/
     align-items: center;
 }
+
+.main_body {
+    background-color: #22272E;
+    height: 700px;
+}
+
+/*.expand_elem {*/
+/*    height: 30%;*/
+/*}*/
+
+/*.image {*/
+/*    height: 400px;*/
+/*}*/
+
+img {
+    height: 600px;
+}
+
+.label {
+    color: white;
+    font-family: terminal, sans-serif;
+    font-size: 35px;
+}
+
+.list_element {
+    clear: both;
+    color: white;
+    font-family: terminal, sans-serif;
+    font-size: 35px;
+}
+
+.element_title {
+    border-style: groove;
+}
+
+.slider {
+    height: 24px;
+    background: lightseagreen;
+    opacity: 40;
+    border-radius: 5px;
+}
+
+.bar {
+    font-size: 24px;
+    float:left;
+}
+
+.page_index {
+    background-color: #22272E;
+    font-size: 40px;
+    float:left;
+}
+
+.dropdown {
+    /*height: 100px;*/
+    width: 100%;
+    overflow: hidden;
+    -webkit-filter: invert(1);
+    filter: invert(1);
+}
+
+.centered {
+    display: flex;
+    align-items: center;
+}
+
+.button_text {
+    text-align: center;
+    width: 100%;
+    font-size: 22px;
+}
+
+.rotated-image {
+  -webkit-transform: rotate(20deg);
+  transform: rotate(20deg)
+}
+
+/* Button style */
+.glow-on-hover {
+    width: 100%;
+    height: 50px;
+    border: none;
+    outline: none;
+    color: #fff;
+    background: #111;
+    /*background-color: #22272E;*/
+    cursor: pointer;
+    position: relative;
+    z-index: 0;
+    border-radius: 60px;
+}
+
+.glow-on-hover:before {
+    content: '';
+    background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    position: absolute;
+    top: -2px;
+    left:-2px;
+    background-size: 400%;
+    z-index: -1;
+    filter: blur(5px);
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    animation: glowing 20s linear infinite;
+    opacity: 0;
+    transition: opacity .3s ease-in-out;
+    border-radius: 60px;
+}
+
+.glow-on-hover:active {
+    color: #000
+}
+
+.glow-on-hover:active:after {
+    background: transparent;
+}
+
+.glow-on-hover:hover:before {
+    opacity: 1;
+}
+
+.glow-on-hover:after {
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #111;
+    /*background-color: #22272E;*/
+    left: 0;
+    top: 0;
+    border-radius: 60px;
+}
+
+@keyframes glowing {
+    0% { background-position: 0 0; }
+    50% { background-position: 400% 0; }
+    100% { background-position: 0 0; }
+}
+
+/*Slider*/
+ /* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+    display: inline-block;
+/*  opacity: 0;*/
+/*  width: 0;*/
+/*  height: 0;*/
+}
+
+/* The slider */
+/*.switch_slider {*/
+/*  position: absolute;*/
+/*  cursor: pointer;*/
+/*  top: 0;*/
+/*  left: 0;*/
+/*  right: 0;*/
+/*  bottom: 0;*/
+/*  background-color: #ccc;*/
+/*  -webkit-transition: .4s;*/
+/*  transition: .4s;*/
+/*}*/
+
+/*.switch_slider:before {*/
+/*  position: absolute;*/
+/*  content: "";*/
+/*  height: 26px;*/
+/*  width: 26px;*/
+/*  left: 4px;*/
+/*  bottom: 4px;*/
+/*  background-color: white;*/
+/*  -webkit-transition: .4s;*/
+/*  transition: .4s;*/
+/*}*/
+
+/*input:checked + .switch_slider {*/
+/*  background-color: #2196F3;*/
+/*}*/
+
+/*input:focus + .switch_slider {*/
+/*  box-shadow: 0 0 1px #2196F3;*/
+/*}*/
+
+/*input:checked + .switch_slider:before {*/
+/*  -webkit-transform: translateX(26px);*/
+/*  -ms-transform: translateX(26px);*/
+/*  transform: translateX(26px);*/
+/*}*/
+
+/*!* Rounded sliders *!*/
+/*.switch_slider.round {*/
+/*  border-radius: 34px;*/
+/*}*/
+
+/*.switch_slider.round:before {*/
+/*  border-radius: 50%;*/
+/*}*/
