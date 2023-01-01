@@ -169,6 +169,7 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
 
         else:
             emit_message('No tables on this page\n', sid, capture_stdout, page_index)
+            socketio.emit('nothing_found_on_page', {'index': page_index}, room=sid)
 
         if user_connected is not None and not user_connected[sid]:
             break
@@ -176,7 +177,7 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
 
 def process_by_link(link, quality, limit, sid, download_on_finish):
     prefix_path = 'static/'
-    emit_message('Downloading document and rendering pages\n', sid)
+    emit_message('Downloading document and rendering pages', sid)
 
     pdf_file = f"output/remote_document_{process_index}.pdf"
     if check_if_url_exists(link):
@@ -201,7 +202,9 @@ def process_by_link(link, quality, limit, sid, download_on_finish):
             paths[i] = path.replace(prefix_path, '')
 
         emit_message("Processing finished, starting download", sid)
-        socketio.emit('download', paths, room=sid)
+        socketio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
+    else:
+        socketio.emit('work_finish', {"download": False, "paths": []}, room=sid)
 
     return True
 

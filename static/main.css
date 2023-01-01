@@ -123,8 +123,8 @@ img {
 
 .page_index {
     background-color: #22272E;
-    font-size: 40px;
-    float:left;
+    font-size: 36px;
+    float: right;
 }
 
 .dropdown {
@@ -143,7 +143,14 @@ img {
 .button_text {
     text-align: center;
     width: 100%;
-    font-size: 22px;
+    font-size: 20px;
+}
+
+.nothing_found_text {
+    text-align: center;
+    width: 100%;
+    font-size: 20px;
+    color: grey;
 }
 
 .rotated-image {
@@ -212,6 +219,20 @@ img {
     0% { background-position: 0 0; }
     50% { background-position: 400% 0; }
     100% { background-position: 0 0; }
+}
+
+.not-glow-on-hover {
+    width: 100%;
+    height: 50px;
+    border: none;
+    outline: none;
+    color: #fff;
+    background: #111;
+    /*background-color: #22272E;*/
+    cursor: pointer;
+    position: relative;
+    z-index: 0;
+    border-radius: 60px;
 }
 
 /*Slider*/
