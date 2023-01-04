@@ -70,13 +70,13 @@ socket.on("init", function(message) {
         img.width = 500;
 
         let header = htmlToElements('<div class="row header align-items-center border" style="height: 10%">\n' +
-            '                <div class="col-lg-1"><div class="p-0 page_index">' + (table_ind + 1).toString() + '</div></div>\n' +
-            '                <div class="col-lg-7 align-items-center"><div class="p-3 slider_border" style="background: #111; background-clip: content-box; border-radius: 5px">\n' +
+            '                <div class="col-lg-1 col-md-1 col-sm-1 col-1"><div class="p-0 page_index">' + (table_ind + 1).toString() + '</div></div>\n' +
+            '                <div class="col-lg-7 col-md-7 col-sm-5 col-5 align-items-center"><div class="p-3 slider_border" style="background: #111; background-clip: content-box; border-radius: 5px">\n' +
             '                </div></div>\n' +
-            '                <div class="col-lg-3"><div class="p-2 download_div">' +
+            '                <div class="col-lg-3 col-md-3 col-sm-4 col-4"><div class="p-2 download_div">' +
             '                    <div class=\"button-placeholder centered\"><div class=\"button_text\">Download</div></div>' +
             '                </div></div>\n' +
-            '                <div class="col-lg-1">\n' +
+            '                <div class="col-lg-1 col-md-1 col-sm-2 col-2">\n' +
             '                    <div class="p-1 expand_elem"><input class="dropdown" type="image" src="expand.png" style="max-width: 30%" alt="Input"> </div>\n' +
             '                </div>\n' +
             '            </div>\n' +
@@ -115,7 +115,6 @@ socket.on("init", function(message) {
 document.body.onclick = function(e) {  // All mouse clicks event
     e=window.event? event.srcElement: e.target;
     let className = e.className;
-    console.log(className);
 
     if (className.includes('dropdown') || className.includes('expand_elem')) {
         // Click is in dropdown div
@@ -143,7 +142,6 @@ document.body.onclick = function(e) {  // All mouse clicks event
             e = e.parentElement;
         }
 
-        console.log(e.id);
         socket.emit("download_task", e.id)
     }
 }
