@@ -168,7 +168,6 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
             socketio.emit('processing_finished', {'index': page_index}, room=sid)
 
         else:
-#             emit_message('No tables on this page\n', sid, capture_stdout, page_index)
             socketio.emit('nothing_found_on_page', {'index': page_index}, room=sid)
 
         if user_connected is not None and not user_connected[sid]:
@@ -238,8 +237,7 @@ def stop():
 @socketio.on("download_task")
 def download_task(index):
     index = str(int(index) + 1)
-    target_directory = f'static/output/csv/'
-    paths = [os.path.join(target_directory, f'export_table_page_{index}.csv')]
+    paths = [os.path.join('static/output/csv/', f'export_table_page_{index}.csv')]
 
     for i, path in enumerate(paths):
         paths[i] = path.replace('static/', '')

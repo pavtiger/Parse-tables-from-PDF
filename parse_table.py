@@ -3,7 +3,6 @@ import io
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import time
 
 try:
     import urllib.request as urllib

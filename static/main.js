@@ -212,7 +212,7 @@ form.addEventListener("reset", (e) => {  // Stop button press event
  * @return {NodeList}
  */
 function htmlToElements(html) {
-    var template = document.createElement('template');
+    let template = document.createElement('template');
     template.innerHTML = html;
     return template.content.childNodes;
 }
