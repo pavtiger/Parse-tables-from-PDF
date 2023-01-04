@@ -74,7 +74,7 @@ socket.on("init", function(message) {
             '                <div class="col-lg-7 col-md-7 col-sm-5 col-5 align-items-center"><div class="p-3 slider_border" style="background: #111; background-clip: content-box; border-radius: 5px">\n' +
             '                </div></div>\n' +
             '                <div class="col-lg-3 col-md-3 col-sm-4 col-4"><div class="p-2 download_div">' +
-            '                    <div class=\"button-placeholder centered\"><div class=\"button_text\">Download</div></div>' +
+            '                    <div class="button-placeholder centered"><div class="button_text">Download</div></div>' +
             '                </div></div>\n' +
             '                <div class="col-lg-1 col-md-1 col-sm-2 col-2">\n' +
             '                    <div class="p-1 expand_elem"><input class="dropdown" type="image" src="expand.png" style="max-width: 30%" alt="Input"> </div>\n' +
@@ -213,12 +213,6 @@ function htmlToElements(html) {
     let template = document.createElement('template');
     template.innerHTML = html;
     return template.content.childNodes;
-}
-
-
-let myFunction = function() {
-    let img = document.getElementsByClassName("expand_elem");
-    img.setAttribute("class", "rotated-image");
 }
 
 

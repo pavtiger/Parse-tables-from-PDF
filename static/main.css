@@ -1,4 +1,5 @@
 html { overflow-y: scroll; }
+
 canvas {
     width: 100%;
     height: 100%;
@@ -142,7 +143,7 @@ img {
 
 .rotated-image {
   -webkit-transform: rotate(20deg);
-  transform: rotate(20deg)
+  transform: rotate(20deg);
 }
 
 /* Button style */
@@ -161,7 +162,7 @@ img {
 
 .glow-on-hover:before {
     content: '';
-    background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #f00);
+    background: linear-gradient(45deg, #f00, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #f00);
     position: absolute;
     top: -2px;
     left: -2px;
@@ -172,7 +173,19 @@ img {
     height: calc(100% + 4px);
     animation: glowing 20s linear infinite;
     opacity: 0;
-    transition: opacity .3s ease-in-out;
+    transition: opacity 0.3s ease-in-out;
+    border-radius: 60px;
+}
+
+.glow-on-hover:after {
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #101111;
+    left: 0;
+    top: 0;
     border-radius: 60px;
 }
 
@@ -186,18 +199,6 @@ img {
 
 .glow-on-hover:hover:before {
     opacity: 1;
-}
-
-.glow-on-hover:after {
-    z-index: -1;
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #101111;
-    left: 0;
-    top: 0;
-    border-radius: 60px;
 }
 
 @keyframes glowing {
@@ -247,28 +248,28 @@ img {
 }
 
 @media (min-width: 544px) {
-    .button_text {font-size:15px;}
-    .nothing_found_text {font-size:15px;}
-    .description {font-size:15px;}
+    .button_text { font-size: 15px; }
+    .nothing_found_text { font-size: 15px; }
+    .description { font-size: 15px; }
 }
 
 /* Medium devices (tablets, 768px and up) The navbar toggle appears at this breakpoint */
 @media (min-width: 768px) {
-    .button_text {font-size:16px;}
-    .nothing_found_text {font-size:16px;}
-    .description {font-size:16px;}
+    .button_text { font-size: 16px; }
+    .nothing_found_text { font-size: 16px; }
+    .description { font-size: 16px; }
 }
 
 /* Large devices (desktops, 992px and up) */
 @media (min-width: 992px) {
-    .button_text {font-size:18px;}
-    .nothing_found_text {font-size:18px;}
-    .description {font-size:18px;}
+    .button_text { font-size: 18px; }
+    .nothing_found_text { font-size: 18px; }
+    .description { font-size: 18px; }
 }
 
 /* Extra large devices (large desktops, 1200px and up) */
 @media (min-width: 1200px) {
-    .button_text {font-size:20px;}
-    .nothing_found_text {font-size:20px;}
-    .description {font-size:20px;}
+    .button_text { font-size: 20px; }
+    .nothing_found_text { font-size: 20px; }
+    .description { font-size: 20px; }
 }

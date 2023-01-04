@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from threading import Thread
 from collections import deque
 import progressbar
-import base64
 
 import cv2
 import numpy as np
