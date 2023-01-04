@@ -8,7 +8,6 @@ socket.on("progress", function(message) {
     let progress_bar = border.querySelector(".slider");
 
     if (progress_bar === null) {  // Create slider div element
-        console.log('remaking');
         progress_bar = document.createElement("div");
         progress_bar.style.width = "0%";
         progress_bar.classList.add('slider');
@@ -30,8 +29,9 @@ socket.on("processing_finished", function(message) {
     let progress_bar = div.querySelector(".slider");
     progress_bar.style.width = "100%";
 
-    let button = document.createElement("div");
+    let button = div.querySelector(".button-placeholder");
     button.innerHTML = "<div class=\"glow-on-hover centered\"><div class=\"button_text\">Download results</div></div>";
+    button.style.visibility = "visible";
 
     let target_dropdown = div.querySelector(".download_div");
     target_dropdown.append(button)
@@ -40,8 +40,16 @@ socket.on("processing_finished", function(message) {
 socket.on("nothing_found_on_page", function(message) {
     let div = document.getElementById(message["index"])
 
-    let button = document.createElement("div");
+    let button = div.querySelector(".button-placeholder");
     button.innerHTML = "<div class=\"not-glow-on-hover centered\"><div class=\"nothing_found_text\">No tables found</div></div>";
+    button.style.visibility = "visible";
+
+    let slider_border = div.querySelector(".slider_border");
+    let empty_bar = document.createElement("div");
+    empty_bar.style.width = "100%";
+    empty_bar.classList.add('empty-slider');
+
+    slider_border.append(empty_bar)
 
     let target_dropdown = div.querySelector(".download_div");
     target_dropdown.append(button)
@@ -61,20 +69,21 @@ socket.on("init", function(message) {
         img.src = 'data:image/jpg;base64,' + base64String;
         img.width = 500;
 
-        let header = htmlToElements('<div class="row header align-items-center" style="height: 10%">\n' +
-            '                <div class="col-lg-1"><div class="p-0 border page_index">' + (table_ind + 1).toString() + '</div></div>\n' +
-            '                <div class="col-lg-7 align-items-center"><div class="p-3 border slider_border" style="background: grey; background-clip: content-box; border-radius: 5px">\n' +
-            // '                    <div class="slider" style="width: 0%"></div>\n' +
+        let header = htmlToElements('<div class="row header align-items-center border" style="height: 10%">\n' +
+            '                <div class="col-lg-1"><div class="p-0 page_index">' + (table_ind + 1).toString() + '</div></div>\n' +
+            '                <div class="col-lg-7 align-items-center"><div class="p-3 slider_border" style="background: #111; background-clip: content-box; border-radius: 5px">\n' +
             '                </div></div>\n' +
-            '                <div class="col-lg-3"><div class="p-2 border download_div"></div></div>\n' +
+            '                <div class="col-lg-3"><div class="p-2 download_div">' +
+            '                    <div class=\"button-placeholder centered\"><div class=\"button_text\">Download</div></div>' +
+            '                </div></div>\n' +
             '                <div class="col-lg-1">\n' +
-            '                    <div class="p-1 border expand_elem"><input class="dropdown" type="image" src="expand.png" style="max-width: 30%" alt="Input"> </div>\n' +
+            '                    <div class="p-1 expand_elem"><input class="dropdown" type="image" src="expand.png" style="max-width: 30%" alt="Input"> </div>\n' +
             '                </div>\n' +
             '            </div>\n' +
             '\n' +
             '            <div class="row main_body justify-content-start align-items-center">\n' +
             '                <div class="col-lg-5 image">\n' +
-            '                    <div class="border image_div"></div>\n' +
+            '                    <div class="image_div"></div>\n' +
             '                </div>\n' +
             // '                <div class="col-lg-5 image">\n' +
             // '                    <div class="p-3 border bg-light">Output</div>\n' +
@@ -90,6 +99,9 @@ socket.on("init", function(message) {
         }
 
         console_div.append(div);
+
+        // let placeholder = div.querySelector(".not-glow-on-hover")
+        // placeholder.style.display = "hidden";
 
         let target_dropdown = div.querySelector(".main_body");
         target_dropdown.style.display = "none";

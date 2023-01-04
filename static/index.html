@@ -16,8 +16,7 @@
 
         <p id="text">Parse tables from PDF</p>
         <div class="col-lg-8 offset-lg-2 col-md-10 offset-md-1"><p class="description">This tool was created to automize the process of pulling tables from PDF documents.
-            It goes through all the pages, recognises where tables are and then proceeds to transfer them to csv.
-            Using pytesseract it parses text from each cell and determines its position in the table.</p></div>
+            It goes through all the pages, recognises where tables are and then proceeds to transfer them to csv.</p></div>
 
 <!--        Form element and download when finished switch-->
         <div class="container">
@@ -29,7 +28,7 @@
                 <input type="reset" id="stop_button" value="Stop"
                        style="background-color: -moz-default-background-color">
             </form>
-            <div class="col-lg-6 offset-lg-3 col-md-8 offset-md-2 p-2 border">
+            <div class="col-lg-6 offset-lg-3 col-md-8 offset-md-2 p-2">
                 <div class="container" style="display: flex">
                     <div class="col-lg-8"><p class="description">Download all files when finished<br>(or you can download them individually)</p></div>
                     <div class="col-lg-2 offset-2">
@@ -45,7 +44,7 @@
         <p id="timer"></p>
         <p id="init_info"></p>
 
-        <div id="console" class="col-lg-8 container-fluid border border-radius: 15px;"></div>
+        <div id="console" class="col-lg-8 container-fluid border-radius: 15px;"></div>
 
         <script type="module" src="main.js"></script>
     </body>
