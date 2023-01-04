@@ -1,13 +1,33 @@
+html { overflow-y: scroll; }
+
+canvas {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    color: floralwhite;
+    padding: 0;
+}
+
 @font-face {
     font-family: terminal;
     src: url('/font.ttf') format('truetype');
 }
 
 #console {
+    color: white;
+    font-family: terminal, sans-serif;
+}
+
+#init_info {
     white-space: pre-wrap;
+    color: white;
     font-family: terminal, sans-serif;
     font-size: 20px;
-
     display: flex;
     justify-content: center;
     align-items: center;
@@ -17,9 +37,11 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    color: #22272e;
 }
 
 #timer {
+    color: white;
     font-family: terminal, sans-serif;
     font-size: 25px;
     display: flex;
@@ -27,20 +49,227 @@
     align-items: center;
 }
 
-#text {
+#header {
+    color: white;
     font-family: terminal, sans-serif;
-    font-size: 35px;
+    font-size: 40px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-#description {
+.description {
+    color: white;
     font-family: terminal, sans-serif;
-    font-size: 16px;
-    margin-left: 20%;
-    margin-right: 20%;
-    display: flex;
-    justify-content: center;
+    font-size: 14px;
     align-items: center;
+}
+
+.main_body {
+    background-color: #22272e;
+    height: 700px;
+}
+
+img {
+    height: 600px;
+}
+
+.label {
+    color: white;
+    font-family: terminal, sans-serif;
+    font-size: 35px;
+}
+
+.list_element {
+    clear: both;
+    color: white;
+    font-family: terminal, sans-serif;
+    font-size: 35px;
+}
+
+.element_title {
+    border-style: groove;
+}
+
+.slider {
+    height: 24px;
+    background: #36aebf;
+    opacity: 80;
+    border-radius: 5px;
+}
+
+.empty-slider {
+    height: 24px;
+    background: linear-gradient(45deg, #fff, #e2e2e2);
+    opacity: 100;
+    border-radius: 5px;
+}
+
+.bar {
+    font-size: 24px;
+    float: left;
+}
+
+.page_index {
+    background-color: #22272e;
+    font-size: 36px;
+    float: right;
+}
+
+.dropdown {
+    width: 100%;
+    overflow: hidden;
+    -webkit-filter: invert(1);
+    filter: invert(1);
+}
+
+.centered {
+    display: flex;
+    align-items: center;
+}
+
+.button_text {
+    text-align: center;
+    width: 100%;
+    font-size: 14px;
+}
+
+.nothing_found_text {
+    text-align: center;
+    width: 100%;
+    font-size: 14px;
+    color: grey;
+}
+
+.rotated-image {
+  -webkit-transform: rotate(20deg);
+  transform: rotate(20deg);
+}
+
+/* Button style */
+.glow-on-hover {
+    width: 100%;
+    height: 50px;
+    border: none;
+    outline: none;
+    color: #fff;
+    background: #111;
+    cursor: pointer;
+    position: relative;
+    z-index: 0;
+    border-radius: 60px;
+}
+
+.glow-on-hover:before {
+    content: '';
+    background: linear-gradient(45deg, #f00, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #f00);
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    background-size: 400%;
+    z-index: -1;
+    filter: blur(5px);
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    animation: glowing 20s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    border-radius: 60px;
+}
+
+.glow-on-hover:after {
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #101111;
+    left: 0;
+    top: 0;
+    border-radius: 60px;
+}
+
+.glow-on-hover:active {
+    color: #111;
+}
+
+.glow-on-hover:active:after {
+    background: transparent;
+}
+
+.glow-on-hover:hover:before {
+    opacity: 1;
+}
+
+@keyframes glowing {
+    0% { background-position: 0 0; }
+    50% { background-position: 400% 0; }
+    100% { background-position: 0 0; }
+}
+
+.not-glow-on-hover {
+    width: 100%;
+    height: 50px;
+    border: none;
+    outline: none;
+    color: #fff;
+    background: #101111;
+    cursor: pointer;
+    position: relative;
+    z-index: 0;
+    border-radius: 60px;
+}
+
+.button-placeholder {
+    width: 100%;
+    height: 50px;
+    border: none;
+    outline: none;
+    color: #fff;
+    background: #111;
+    cursor: pointer;
+    position: relative;
+    z-index: 0;
+    border-radius: 60px;
+    visibility: hidden;
+}
+
+/* Slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+    display: inline-block;
+}
+
+@media (min-width: 544px) {
+    .button_text { font-size: 15px; }
+    .nothing_found_text { font-size: 15px; }
+    .description { font-size: 15px; }
+}
+
+/* Medium devices (tablets, 768px and up) The navbar toggle appears at this breakpoint */
+@media (min-width: 768px) {
+    .button_text { font-size: 16px; }
+    .nothing_found_text { font-size: 16px; }
+    .description { font-size: 16px; }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+    .button_text { font-size: 18px; }
+    .nothing_found_text { font-size: 18px; }
+    .description { font-size: 18px; }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    .button_text { font-size: 20px; }
+    .nothing_found_text { font-size: 20px; }
+    .description { font-size: 20px; }
 }

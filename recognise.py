@@ -39,8 +39,9 @@ args = vars(ap.parse_args())
 
 # Init app
 pbar = None
-app = Flask(__name__, static_url_path='')
-socketio = SocketIO(app)
+app = Flask(__name__, static_url_path='', template_folder='static/')
+MAX_BUFFER_SIZE = 50 * 1000 * 1000  # 50 MB
+socketio = SocketIO(app, max_http_buffer_size=MAX_BUFFER_SIZE)
 process_queue = deque()
 process_index = -1
 
@@ -68,11 +69,17 @@ def check_if_url_exists(url):
         return False
 
 
-def emit_message(message, sid, capture_stdout=True):
+def emit_message(message, sid, capture_stdout=True, index=None):
     if capture_stdout:
-        socketio.emit('progress', {
-            'stdout': message + '\n'
-        }, room=sid)
+        if index is None:
+            socketio.emit('init_info', {
+                'stdout': message
+            }, room=sid)
+        else:
+            socketio.emit('progress', {
+                'stdout': message,
+                'index': index
+            }, room=sid)
     else:
         print(message)
 
@@ -129,9 +136,20 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
         limit = int(limit)
 
     for page_index, page in enumerate(pages[:limit]):
-        emit_message(f'Processing page number {page_index + 1}', sid, capture_stdout)
         image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
         page.save(image_path, 'PNG')  # Save page as an image
+
+    image_data = []
+    for filename_index in range(limit):
+        file_path = os.path.join("static/output/pages", f"page_{filename_index}.jpg")
+        with open(file_path, 'rb') as f:
+            image_data.append(f.read())
+
+    socketio.emit("init", {"page_cnt": limit, "image_data": image_data}, room=sid)
+
+    for page_index, page in enumerate(pages[:limit]):
+        # emit_message(f'Processing page number {page_index + 1}', sid, capture_stdout)
+        image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
 
         detected_cont = detect_table(image_path, page_index, prefix_path)
 
@@ -143,26 +161,26 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
             cropped_filename = f"{prefix_path}output/cropped/cropped_table_{page_index + 1}.jpg"
             cv2.imwrite(cropped_filename, cropped)
 
-            convert_to_csv(cropped_filename, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
+            convert_to_csv(cropped_filename, page_index, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
                            user_connected, capture_stdout, socketio, sid)
 
-            emit_message('CSV file saved\n', sid, capture_stdout)
+            socketio.emit('processing_finished', {'index': page_index}, room=sid)
 
         else:
-            emit_message('No tables on this page\n', sid, capture_stdout)
+            socketio.emit('nothing_found_on_page', {'index': page_index}, room=sid)
 
         if user_connected is not None and not user_connected[sid]:
             break
 
 
-def process_by_link(link, quality, limit, sid):
+def process_by_link(link, quality, limit, sid, download_on_finish):
     prefix_path = 'static/'
-    emit_message('Downloading document\n', sid)
+    emit_message('Downloading document and rendering pages', sid)
 
     pdf_file = f"output/remote_document_{process_index}.pdf"
     if check_if_url_exists(link):
         urllib.request.urlretrieve(link, pdf_file)
-        emit_message('Processing started\n', sid)
+        emit_message('Processing started', sid)
 
     else:
         emit_message('There is a problem loading file from this link. Check if it is correct\n', sid)
@@ -171,24 +189,28 @@ def process_by_link(link, quality, limit, sid):
     # Main spreadsheet processing
     process(prefix_path, pdf_file, quality, limit, True, sid, socketio, user_connected)
 
-    # Send download paths
-    target_directory = f'{prefix_path}output/csv'
-    paths = []
-    for file in glob(os.path.join(target_directory, '*.csv')):
-        paths.append(file)
+    if download_on_finish:
+        # Send download paths
+        target_directory = f'{prefix_path}output/csv'
+        paths = []
+        for file in glob(os.path.join(target_directory, '*.csv')):
+            paths.append(file)
 
-    for i, path in enumerate(paths):
-        paths[i] = path.replace(prefix_path, '')
+        for i, path in enumerate(paths):
+            paths[i] = path.replace(prefix_path, '')
 
-    emit_message("Processing finished, starting download", sid)
-    socketio.emit('download', paths, room=sid)
+        emit_message("Processing finished, starting download", sid)
+        socketio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
+    else:
+        socketio.emit('work_finish', {"download": False, "paths": []}, room=sid)
+
     return True
 
 
 # Return main page
 @app.route('/')
 def root():
-    return render_template('main.html')
+    return render_template('index.html')
 
 
 @socketio.event
@@ -211,6 +233,17 @@ def stop():
     user_connected[request.sid] = False
 
 
+@socketio.on("download_task")
+def download_task(index):
+    index = str(int(index) + 1)
+    paths = [os.path.join('static/output/csv/', f'export_table_page_{index}.csv')]
+
+    for i, path in enumerate(paths):
+        paths[i] = path.replace('static/', '')
+
+    socketio.emit('work_finish', {"download": True, "paths": paths}, room=request.sid)
+
+
 @socketio.on('send')
 def get_data(message):
     if not message['link'].lower().startswith('http'):
@@ -219,11 +252,11 @@ def get_data(message):
     if len(process_queue) > 0:
         for elem in process_queue:
             if elem['sid'] == request.sid:
-                socketio.emit('progress', {'stdout': 'You already have an ongoing request', 'time': 0},
+                socketio.emit('init_info', {'stdout': 'You already have an ongoing request'},
                               room=request.sid)
                 return
 
-        socketio.emit('progress', {'stdout': 'Server busy', 'time': 0}, room=request.sid)
+        socketio.emit('init_info', {'stdout': 'Server busy'}, room=request.sid)
 
     process_queue.append({'sid': request.sid, 'message': message})
 
@@ -242,7 +275,8 @@ def process_caller():
             item = process_queue[0]
             print(f'Started processing of {item}')
 
-            process_by_link(item['message']['link'], server_quality, item['message']['limit'], item['sid'])
+            process_by_link(item['message']['link'], server_quality, item['message']['limit'], item['sid'],
+                            item['message']['download_results'])
             print('Processing ended')
 
             process_index += 1
