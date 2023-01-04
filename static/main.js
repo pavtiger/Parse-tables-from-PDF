@@ -135,7 +135,16 @@ document.body.onclick = function(e) {  // All mouse clicks event
     }
 
     if (className.includes('button_text') || className.includes('glow-on-hover')) {
-        console.log("pressed");
+        let up = 5;
+        if (e.className === "button_text") {
+            up = 6;
+        }
+        for (let i = 0; i < up; ++i) {
+            e = e.parentElement;
+        }
+
+        console.log(e.id);
+        socket.emit("download_task", e.id)
     }
 }
 

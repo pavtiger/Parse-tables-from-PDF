@@ -235,6 +235,18 @@ def stop():
     user_connected[request.sid] = False
 
 
+@socketio.on("download_task")
+def download_task(index):
+    index = str(int(index) + 1)
+    target_directory = f'static/output/csv/'
+    paths = [os.path.join(target_directory, f'export_table_page_{index}.csv')]
+
+    for i, path in enumerate(paths):
+        paths[i] = path.replace('static/', '')
+
+    socketio.emit('work_finish', {"download": True, "paths": paths}, room=request.sid)
+
+
 @socketio.on('send')
 def get_data(message):
     if not message['link'].lower().startswith('http'):
