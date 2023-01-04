@@ -168,7 +168,7 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
             socketio.emit('processing_finished', {'index': page_index}, room=sid)
 
         else:
-            emit_message('No tables on this page\n', sid, capture_stdout, page_index)
+#             emit_message('No tables on this page\n', sid, capture_stdout, page_index)
             socketio.emit('nothing_found_on_page', {'index': page_index}, room=sid)
 
         if user_connected is not None and not user_connected[sid]:
@@ -182,7 +182,7 @@ def process_by_link(link, quality, limit, sid, download_on_finish):
     pdf_file = f"output/remote_document_{process_index}.pdf"
     if check_if_url_exists(link):
         urllib.request.urlretrieve(link, pdf_file)
-        emit_message('Processing started\n', sid)
+        emit_message('Processing started', sid)
 
     else:
         emit_message('There is a problem loading file from this link. Check if it is correct\n', sid)

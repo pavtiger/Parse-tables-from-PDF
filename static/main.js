@@ -4,7 +4,17 @@ let form = document.forms.submit_link;
 
 
 socket.on("progress", function(message) {
-    let progress_bar = document.getElementById(message["index"]).querySelector(".slider");
+    let border = document.getElementById(message["index"]).querySelector(".slider_border");
+    let progress_bar = border.querySelector(".slider");
+
+    if (progress_bar === null) {  // Create slider div element
+        console.log('remaking');
+        progress_bar = document.createElement("div");
+        progress_bar.style.width = "0%";
+        progress_bar.classList.add('slider');
+        border.append(progress_bar)
+    }
+
     progress_bar.style.width = message["stdout"].toString() + "%";
     processing_in_progress = true;
 });
@@ -53,12 +63,10 @@ socket.on("init", function(message) {
 
         let header = htmlToElements('<div class="row header align-items-center" style="height: 10%">\n' +
             '                <div class="col-lg-1"><div class="p-0 border page_index">' + (table_ind + 1).toString() + '</div></div>\n' +
-            '                <div class="col-lg-7 align-items-center"><div class="p-3 border" style="background: grey; background-clip: content-box; border-radius: 5px">\n' +
-            '                    <div class="slider" style="width: 0%"></div>\n' +
+            '                <div class="col-lg-7 align-items-center"><div class="p-3 border slider_border" style="background: grey; background-clip: content-box; border-radius: 5px">\n' +
+            // '                    <div class="slider" style="width: 0%"></div>\n' +
             '                </div></div>\n' +
-            '                <div class="col-lg-3"><div class="p-2 border download_div">\n' +
-            // '                    <div class="glow-on-hover centered"><div class="button_text">Download</div></div>\n' +
-            '                </div></div>\n' +
+            '                <div class="col-lg-3"><div class="p-2 border download_div"></div></div>\n' +
             '                <div class="col-lg-1">\n' +
             '                    <div class="p-1 border expand_elem"><input class="dropdown" type="image" src="expand.png" style="max-width: 30%" alt="Input"> </div>\n' +
             '                </div>\n' +
@@ -66,9 +74,7 @@ socket.on("init", function(message) {
             '\n' +
             '            <div class="row main_body justify-content-start align-items-center">\n' +
             '                <div class="col-lg-5 image">\n' +
-            '                    <div class="border image_div">' +
-            // '                       <img src="output/pages/page_0.jpg" alt="Input">' +
-            '                   </div>\n' +
+            '                    <div class="border image_div"></div>\n' +
             '                </div>\n' +
             // '                <div class="col-lg-5 image">\n' +
             // '                    <div class="p-3 border bg-light">Output</div>\n' +
