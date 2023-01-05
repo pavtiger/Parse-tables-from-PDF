@@ -43,7 +43,7 @@ app = Flask(__name__, static_url_path='', template_folder='static/')
 MAX_BUFFER_SIZE = 50 * 1000 * 1000  # 50 MB
 socketio = SocketIO(app, max_http_buffer_size=MAX_BUFFER_SIZE)
 process_queue = deque()
-process_index = -1
+process_index = 0
 
 user_connected = dict()
 
@@ -178,7 +178,7 @@ def process_by_link(link, quality, limit, sid, download_on_finish):
     prefix_path = 'static/'
     emit_message('Downloading document and rendering pages', sid)
 
-    pdf_file = f"output/remote_document_{process_index}.pdf"
+    pdf_file = os.path.join(prefix_path, f"output/processed_documents/remote_document_{process_index}.pdf")
     if check_if_url_exists(link):
         urllib.request.urlretrieve(link, pdf_file)
         emit_message('Processing started', sid)
@@ -257,7 +257,7 @@ def get_data(message):
                               room=request.sid)
                 return
 
-        socketio.emit('init_info', {'stdout': 'Server busy'}, room=request.sid)
+        socketio.emit('init_info', {'stdout': 'Server busy. Please wait'}, room=request.sid)
 
     user_connected[request.sid] = True
     process_queue.append({'sid': request.sid, 'message': message})
@@ -334,7 +334,8 @@ if __name__ == "__main__":
 
     elif args['server']:
         eventlet.monkey_patch()
-        clear_directory('output/remote_document_*')
+        os.makedirs('static/output/processed_documents', exist_ok=True)
+        clear_directory('static/output/processed_documents/remote_document_*')
 
         x = Thread(target=process_caller, args=())
         x.start()
