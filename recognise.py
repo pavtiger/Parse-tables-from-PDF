@@ -164,7 +164,8 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
             convert_to_csv(cropped_filename, page_index, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
                            user_connected, capture_stdout, socketio, sid)
 
-            socketio.emit('processing_finished', {'index': page_index}, room=sid)
+            if user_connected is not None and user_connected[sid]:
+                socketio.emit('processing_finished', {'index': page_index}, room=sid)
 
         else:
             socketio.emit('nothing_found_on_page', {'index': page_index}, room=sid)
@@ -258,6 +259,7 @@ def get_data(message):
 
         socketio.emit('init_info', {'stdout': 'Server busy'}, room=request.sid)
 
+    user_connected[request.sid] = True
     process_queue.append({'sid': request.sid, 'message': message})
 
 
