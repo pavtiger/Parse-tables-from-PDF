@@ -100,9 +100,6 @@ socket.on("init", function(message) {
 
         console_div.append(div);
 
-        // let placeholder = div.querySelector(".not-glow-on-hover")
-        // placeholder.style.display = "hidden";
-
         let target_dropdown = div.querySelector(".main_body");
         target_dropdown.style.display = "none";
 
@@ -169,7 +166,12 @@ socket.on("work_finish", function(message) {  // Receive and download results
 form.addEventListener("submit", (e) => {  // Submit button press event
     e.preventDefault();
     start_time = Date.now();
-    let console_element = document.getElementById("console");
+    let console_element = document.getElementById("init_info");
+
+    if (processing_in_progress) {
+        console_element.innerHTML += "You already have an ongoing request. Cancel your current run first\n";
+        return;
+    }
 
     let dict = {}
     const formData = new FormData(document.querySelector("form"));
@@ -189,6 +191,10 @@ form.addEventListener("submit", (e) => {  // Submit button press event
     let init_info = document.getElementById("init_info");
     init_info.innerHTML = "";
 
+    // Clear console div element
+    let console = document.getElementById("console");
+    console.innerHTML = "";
+
     let stop_button = document.getElementById("stop_button");
     stop_button.style.color = "red";
 
@@ -201,6 +207,8 @@ form.addEventListener("reset", (e) => {  // Stop button press event
 
     let stop_button = document.getElementById("stop_button");
     stop_button.style.color = "black";
+    processing_in_progress = false;
+
     socket.emit("stop");
 });
 
