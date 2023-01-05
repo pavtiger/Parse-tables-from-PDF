@@ -136,6 +136,7 @@ static/output/csv/*
 static/output/detects/*
 static/output/pages/*
 static/output/debug/*
+static/output/processed_documents/*
 
 log
 config.py
