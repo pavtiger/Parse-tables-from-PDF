@@ -68,10 +68,14 @@ body {
 .main_body {
     background-color: #22272e;
     height: 700px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: flex-start;
 }
 
 img {
-    height: 600px;
+    /*height: 600px;*/
 }
 
 .label {
@@ -139,6 +143,10 @@ img {
     width: 100%;
     font-size: 14px;
     color: grey;
+}
+
+.image {
+    display: inline-block
 }
 
 .rotated-image {

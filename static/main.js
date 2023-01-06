@@ -67,7 +67,8 @@ socket.on("init", function(message) {
         );
 
         img.src = 'data:image/jpg;base64,' + base64String;
-        img.width = 500;
+        img.style.width = "100%";
+        img.onclick = function() { img_box(this) };
 
         let header = htmlToElements('<div class="row header align-items-center border" style="height: 10%">\n' +
             '                <div class="col-lg-1 col-md-1 col-sm-1 col-1"><div class="p-0 page_index">' + (table_ind + 1).toString() + '</div></div>\n' +
@@ -81,13 +82,13 @@ socket.on("init", function(message) {
             '                </div>\n' +
             '            </div>\n' +
             '\n' +
-            '            <div class="row main_body justify-content-start align-items-center">\n' +
+            '            <div class="container main_body">\n' +
             '                <div class="col-lg-5 image">\n' +
             '                    <div class="image_div"></div>\n' +
             '                </div>\n' +
-            // '                <div class="col-lg-5 image">\n' +
-            // '                    <div class="p-3 border bg-light">Output</div>\n' +
-            // '                </div>\n' +
+            '                <div class="col-lg-5 image">\n' +
+            '                    <div class="image_div_table"></div>\n' +
+            '                </div>\n' +
             '            </div>');
 
         let div = document.createElement("div");
@@ -106,6 +107,25 @@ socket.on("init", function(message) {
         let image_div = div.querySelector(".image_div");
         image_div.append(img)
     }
+});
+
+
+socket.on("add_table_image", function(message) {
+    let div = document.getElementById(message["page_index"]).querySelector(".image_div_table");
+
+    const img = new Image();  // Create image from data received from server
+    let image_data = message["image_data"];
+
+    let base64String = btoa(
+        new Uint8Array(image_data)
+            .reduce((data, byte) => data + String.fromCharCode(byte), "")
+    );
+
+    img.src = 'data:image/jpg;base64,' + base64String;
+    img.style.width = "100%";
+    img.onclick = function(){ img_box(this) };
+
+    div.append(img);
 });
 
 
