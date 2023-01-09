@@ -148,7 +148,6 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
     socketio.emit("init", {"page_cnt": limit, "image_data": image_data}, room=sid)
 
     for page_index, page in enumerate(pages[:limit]):
-        # emit_message(f'Processing page number {page_index + 1}', sid, capture_stdout)
         image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
 
         detected_cont = detect_table(image_path, page_index, prefix_path)
@@ -160,6 +159,12 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
 
             cropped_filename = f"{prefix_path}output/cropped/cropped_table_{page_index + 1}.jpg"
             cv2.imwrite(cropped_filename, cropped)
+
+            # Send current page to the user
+            with open(cropped_filename, 'rb') as f:
+                image_data = f.read()
+
+            socketio.emit("add_table_image", {"page_index": page_index, "image_data": image_data}, room=sid)
 
             convert_to_csv(cropped_filename, page_index, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
                            user_connected, capture_stdout, socketio, sid)
