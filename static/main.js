@@ -78,7 +78,7 @@ socket.on("init", function(message) {
             '                    <div class="button-placeholder centered"><div class="button_text">Download</div></div>' +
             '                </div></div>\n' +
             '                <div class="col-lg-1 col-md-1 col-sm-2 col-2">\n' +
-            '                    <div class="p-1 expand_elem"><input class="dropdown" type="image" src="expand.png" style="max-width: 30%" alt="Input"> </div>\n' +
+            '                    <div class="p-1 expand_elem"><input class="dropdown" type="image" src="expand.png" alt="Input"> </div>\n' +
             '                </div>\n' +
             '            </div>\n' +
             '\n' +
@@ -230,6 +230,9 @@ form.addEventListener("reset", (e) => {  // Stop button press event
     processing_in_progress = false;
 
     socket.emit("stop");
+
+    let console_element = document.getElementById("init_info");
+    console_element.innerHTML += "Processing stopped\n";
 });
 
 

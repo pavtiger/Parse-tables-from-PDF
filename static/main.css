@@ -27,13 +27,14 @@ body {
     white-space: pre-wrap;
     color: white;
     font-family: terminal, sans-serif;
-    font-size: 20px;
+    font-size: 30px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 #form {
+    width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -43,7 +44,7 @@ body {
 #timer {
     color: white;
     font-family: terminal, sans-serif;
-    font-size: 25px;
+    font-size: 30px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -52,7 +53,8 @@ body {
 #header {
     color: white;
     font-family: terminal, sans-serif;
-    font-size: 40px;
+    font-size: 45px;
+    margin-top: 2%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -61,7 +63,7 @@ body {
 .description {
     color: white;
     font-family: terminal, sans-serif;
-    font-size: 14px;
+    font-size: 18px;
     align-items: center;
 }
 
@@ -75,7 +77,7 @@ body {
 }
 
 img {
-    /*height: 600px;*/
+    /* height: 600px; */
 }
 
 .label {
@@ -121,7 +123,7 @@ img {
 }
 
 .dropdown {
-    width: 100%;
+    max-width: 30%;
     overflow: hidden;
     -webkit-filter: invert(1);
     filter: invert(1);
@@ -135,18 +137,18 @@ img {
 .button_text {
     text-align: center;
     width: 100%;
-    font-size: 14px;
+    font-size: 18px;
 }
 
 .nothing_found_text {
     text-align: center;
     width: 100%;
-    font-size: 14px;
+    font-size: 18px;
     color: grey;
 }
 
 .image {
-    display: inline-block
+    display: inline-block;
 }
 
 .rotated-image {
@@ -255,29 +257,57 @@ img {
     display: inline-block;
 }
 
+/* Font size control for different devices */
+
+/* Very small mobile devices */
 @media (min-width: 544px) {
-    .button_text { font-size: 15px; }
-    .nothing_found_text { font-size: 15px; }
-    .description { font-size: 15px; }
+    #header {
+        font-size: 50px;
+        margin-top: 2%;
+    }
+    #init_info { font-size: 30px; }
+    .dropdown { max-width: 60%; }
+    .button_text { font-size: 18px; }
+    .nothing_found_text { font-size: 18px; }
+    .description { font-size: 18px; }
 }
 
-/* Medium devices (tablets, 768px and up) The navbar toggle appears at this breakpoint */
+/* Medium devices (tablets, 768px and up) and newer phones. The navbar toggle appears at this breakpoint */
 @media (min-width: 768px) {
-    .button_text { font-size: 16px; }
-    .nothing_found_text { font-size: 16px; }
-    .description { font-size: 16px; }
+    #header {
+        font-size: 70px;
+        margin-top: 10%;
+    }
+    #init_info { font-size: 25px; }
+    #timer { font-size: 40px; }
+    .dropdown { max-width: 70%; }
+    .button_text { font-size: 22px; }
+    .nothing_found_text { font-size: 20px; }
+    .description { font-size: 24px; }
 }
 
 /* Large devices (desktops, 992px and up) */
 @media (min-width: 992px) {
-    .button_text { font-size: 18px; }
+    #header {
+        font-size: 45px;
+        margin-top: 2%;
+    }
+    #init_info { font-size: 20px; }
+    .dropdown { max-width: 40%; }
+    .button_text { font-size: 20px; }
     .nothing_found_text { font-size: 18px; }
     .description { font-size: 18px; }
 }
 
 /* Extra large devices (large desktops, 1200px and up) */
 @media (min-width: 1200px) {
-    .button_text { font-size: 20px; }
+    #header {
+        font-size: 50px;
+        margin-top: 2%;
+    }
+    #init_info { font-size: 20px; }
+    .dropdown { max-width: 40%; }
+    .button_text { font-size: 22px; }
     .nothing_found_text { font-size: 20px; }
     .description { font-size: 20px; }
 }
