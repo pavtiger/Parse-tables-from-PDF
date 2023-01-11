@@ -1,4 +1,5 @@
-const socket = io("ws://" + window.location.hostname + ":" + window.location.port);
+const socket = io("ws://" + window.location.hostname + ":1500");
+
 let start_time, processing_in_progress = false;
 let form = document.forms.submit_link;
 

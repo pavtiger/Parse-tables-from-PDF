@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 from pdf2image import convert_from_path
 
-from flask_socketio import SocketIO
+import socketio
 import eventlet
 from flask import Flask, send_from_directory, render_template, request
 
@@ -39,9 +39,25 @@ args = vars(ap.parse_args())
 
 # Init app
 pbar = None
-app = Flask(__name__, static_url_path='', template_folder='static/')
 MAX_BUFFER_SIZE = 50 * 1000 * 1000  # 50 MB
-socketio = SocketIO(app, max_http_buffer_size=MAX_BUFFER_SIZE)
+
+# Create a Socket.IO server
+sio = socketio.Server(cors_allowed_origins=['http://pdf.pavtiger.com'])
+app = socketio.WSGIApp(sio, static_files={
+    '/': {'content_type': 'text/html', 'filename': 'static/index.html'},
+    '/main.css': {'content_type': 'text/css', 'filename': 'static/main.css'},
+    # Javascript
+    '/main.js': {'content_type': 'text/javascript', 'filename': 'static/main.js'},
+    '/img_box.js': {'content_type': 'text/javascript', 'filename': 'static/img_box.js'},
+    '/socket.io.min.js': {'content_type': 'text/javascript', 'filename': 'static/socket.io.min.js'},
+    # Fonts
+    '/font.ttf': {'content_type': 'text/ttf', 'filename': 'static/font.ttf'},
+    # Images
+    '/icon.png': {'content_type': 'image/png', 'filename': 'static/icon.png'},
+    '/expand.png': {'content_type': 'image/png', 'filename': 'static/expand.png'},
+    '/output/csv': 'static/output/csv'
+})
+
 process_queue = deque()
 process_index = 0
 
@@ -72,11 +88,11 @@ def check_if_url_exists(url):
 def emit_message(message, sid, capture_stdout=True, index=None):
     if capture_stdout:
         if index is None:
-            socketio.emit('init_info', {
+            sio.emit('init_info', {
                 'stdout': message
             }, room=sid)
         else:
-            socketio.emit('progress', {
+            sio.emit('progress', {
                 'stdout': message,
                 'index': index
             }, room=sid)
@@ -119,7 +135,7 @@ def detect_table(filename, page, prefix_path):
     return table_coords
 
 
-def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, socketio=None, user_connected=None):
+def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, sio=None, user_connected=None):
     # Create directories if non-existent
     for path in ['', 'csv', 'detects', 'pages', 'cropped', 'debug']:
         os.makedirs(os.path.join(prefix_path, 'output', path), exist_ok=True)
@@ -145,7 +161,7 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
         with open(file_path, 'rb') as f:
             image_data.append(f.read())
 
-    socketio.emit("init", {"page_cnt": limit, "image_data": image_data}, room=sid)
+    sio.emit("init", {"page_cnt": limit, "image_data": image_data}, room=sid)
 
     for page_index, page in enumerate(pages[:limit]):
         image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
@@ -164,16 +180,16 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, soc
             with open(cropped_filename, 'rb') as f:
                 image_data = f.read()
 
-            socketio.emit("add_table_image", {"page_index": page_index, "image_data": image_data}, room=sid)
+            sio.emit("add_table_image", {"page_index": page_index, "image_data": image_data}, room=sid)
 
             convert_to_csv(cropped_filename, page_index, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
-                           user_connected, capture_stdout, socketio, sid)
+                           user_connected, capture_stdout, sio, sid)
 
             if user_connected is not None and user_connected[sid]:
-                socketio.emit('processing_finished', {'index': page_index}, room=sid)
+                sio.emit('processing_finished', {'index': page_index}, room=sid)
 
         else:
-            socketio.emit('nothing_found_on_page', {'index': page_index}, room=sid)
+            sio.emit('nothing_found_on_page', {'index': page_index}, room=sid)
 
         if user_connected is not None and not user_connected[sid]:
             break
@@ -186,14 +202,13 @@ def process_by_link(link, quality, limit, sid, download_on_finish):
     pdf_file = os.path.join(prefix_path, f"output/processed_documents/remote_document_{process_index}.pdf")
     if check_if_url_exists(link):
         urllib.request.urlretrieve(link, pdf_file)
-        emit_message('Processing started', sid)
-
     else:
         emit_message('There is a problem loading file from this link. Check if it is correct\n', sid)
         return False
 
     # Main spreadsheet processing
-    process(prefix_path, pdf_file, quality, limit, True, sid, socketio, user_connected)
+    emit_message('Processing started', sid)
+    process(prefix_path, pdf_file, quality, limit, True, sid, sio, user_connected)
 
     if download_on_finish:
         # Send download paths
@@ -206,72 +221,60 @@ def process_by_link(link, quality, limit, sid, download_on_finish):
             paths[i] = path.replace(prefix_path, '')
 
         emit_message("Processing finished, starting download", sid)
-        socketio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
+        sio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
     else:
-        socketio.emit('work_finish', {"download": False, "paths": []}, room=sid)
+        sio.emit('work_finish', {"download": False, "paths": []}, room=sid)
 
     return True
 
 
-# Return main page
-@app.route('/')
-def root():
-    return render_template('index.html')
+@sio.event
+def connect(sid, environ):
+    user_connected[sid] = True
 
 
-@socketio.event
-def connect():
-    user_connected[request.sid] = True
-
-
-@socketio.event
-def connect_error(data):
+@sio.event
+def connect_error(sid, data):
     print("The connection failed!")
 
 
-@socketio.event
-def disconnect():
-    user_connected[request.sid] = False
+@sio.event
+def disconnect(sid):
+    user_connected[sid] = False
 
 
-@socketio.event
-def stop():
-    user_connected[request.sid] = False
+@sio.event
+def stop(sid):
+    user_connected[sid] = False
 
 
-@socketio.on("download_task")
-def download_task(index):
+@sio.on("download_task")
+def download_task(sid, index):
     index = str(int(index) + 1)
     paths = [os.path.join('static/output/csv/', f'export_table_page_{index}.csv')]
 
     for i, path in enumerate(paths):
         paths[i] = path.replace('static/', '')
 
-    socketio.emit('work_finish', {"download": True, "paths": paths}, room=request.sid)
+    sio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
 
 
-@socketio.on('send')
-def get_data(message):
+@sio.on('send')
+def get_data(sid, message):
     if not message['link'].lower().startswith('http'):
         return
 
     if len(process_queue) > 0:
         for elem in process_queue:
-            if elem['sid'] == request.sid:
-                socketio.emit('init_info', {'stdout': 'You already have an ongoing request'},
-                              room=request.sid)
+            if elem['sid'] == sid:
+                sio.emit('init_info', {'stdout': 'You already have an ongoing request'},
+                              room=sid)
                 return
 
-        socketio.emit('init_info', {'stdout': 'Server busy. Please wait'}, room=request.sid)
+        sio.emit('init_info', {'stdout': 'Server busy. Please wait'}, room=sid)
 
-    user_connected[request.sid] = True
-    process_queue.append({'sid': request.sid, 'message': message})
-
-
-# Get files from server (e.g libs)
-@app.route('/js/<path:path>')
-def send_js(path):
-    return send_from_directory('js', path)
+    user_connected[sid] = True
+    process_queue.append({'sid': sid, 'message': message})
 
 
 def process_caller():
@@ -346,7 +349,7 @@ if __name__ == "__main__":
         x.start()
 
         print(f"Listening on http://{ip_address}:{port}")
-        socketio.run(app, host=ip_address, port=port)
+        eventlet.wsgi.server(eventlet.listen((ip_address, 1500)), app)
 
     else:
         print('You need to specify call type: -s/--server or -c/--client')
