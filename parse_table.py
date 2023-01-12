@@ -52,7 +52,7 @@ def extract_value(x):
     return x[0].text
 
 
-def convert_to_csv(filename, page_index, output_path, user_connected, capture_stdout, socketio=None, sid=None):
+def convert_to_csv(filename, page_index, output_path, user_connected, capture_stdout, sio=None, sid=None):
     im = imgread(filename)
     width, height, _ = im.shape
 
@@ -139,7 +139,7 @@ def convert_to_csv(filename, page_index, output_path, user_connected, capture_st
 
         if capture_stdout:
             # progress_bar = '⬛' * int(BAR_LENGTH * (ind / len(cont)))
-            socketio.emit('progress', {
+            sio.emit('progress', {
                 'stdout': int(ind / len(cont) * 100),
                 'index': page_index
             }, room=sid)
@@ -147,7 +147,7 @@ def convert_to_csv(filename, page_index, output_path, user_connected, capture_st
         if user_connected is not None and not user_connected[sid]:
             break
 
-    # socketio.emit('send_table', {
+    # sio.emit('send_table', {
     #     'table': table_array,
     # }, room=sid)
 
