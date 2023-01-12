@@ -116,6 +116,10 @@ img {
     float: left;
 }
 
+.loading {
+    font-size: 20px;
+}
+
 .page_index {
     background-color: #22272e;
     font-size: 36px;

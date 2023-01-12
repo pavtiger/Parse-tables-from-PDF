@@ -1,7 +1,8 @@
-const socket = io("ws://" + window.location.hostname + ":1500");
+const socket = io("ws://" + window.location.hostname + ":" + window.location.port);
 
 let start_time, processing_in_progress = false;
 let form = document.forms.submit_link;
+let pages_preview_downloaded = new Set();
 
 
 socket.on("progress", function(message) {
@@ -59,18 +60,6 @@ socket.on("nothing_found_on_page", function(message) {
 socket.on("init", function(message) {
     let console_div = document.getElementById("console");
     for (let table_ind = 0; table_ind < message["page_cnt"]; ++table_ind) {
-        const img = new Image();  // Create image from data received from server
-        let image_data = message["image_data"];
-
-        let base64String = btoa(
-            new Uint8Array(image_data[table_ind])
-                .reduce((data, byte) => data + String.fromCharCode(byte), "")
-        );
-
-        img.src = 'data:image/jpg;base64,' + base64String;
-        img.style.width = "100%";
-        img.onclick = function() { img_box(this) };
-
         let header = htmlToElements('<div class="row header align-items-center border" style="height: 10%">\n' +
             '                <div class="col-lg-1 col-md-1 col-sm-1 col-1"><div class="p-0 page_index">' + (table_ind + 1).toString() + '</div></div>\n' +
             '                <div class="col-lg-7 col-md-7 col-sm-5 col-5 align-items-center"><div class="p-3 slider_border" style="background: #111; background-clip: content-box; border-radius: 5px">\n' +
@@ -84,6 +73,7 @@ socket.on("init", function(message) {
             '            </div>\n' +
             '\n' +
             '            <div class="container main_body">\n' +
+            '                <div class="loading">Loading image...</div>\n' +
             '                <div class="col-lg-5 image">\n' +
             '                    <div class="image_div"></div>\n' +
             '                </div>\n' +
@@ -104,15 +94,12 @@ socket.on("init", function(message) {
 
         let target_dropdown = div.querySelector(".main_body");
         target_dropdown.style.display = "none";
-
-        let image_div = div.querySelector(".image_div");
-        image_div.append(img)
     }
 });
 
 
-socket.on("add_table_image", function(message) {
-    let div = document.getElementById(message["page_index"]).querySelector(".image_div_table");
+socket.on("add_page_image", function(message) {
+    let image_div = document.getElementById(message["page_index"]).querySelector(message["type"]);
 
     const img = new Image();  // Create image from data received from server
     let image_data = message["image_data"];
@@ -124,9 +111,13 @@ socket.on("add_table_image", function(message) {
 
     img.src = 'data:image/jpg;base64,' + base64String;
     img.style.width = "100%";
-    img.onclick = function(){ img_box(this) };
+    img.onclick = function() { img_box(this) };
 
-    div.append(img);
+    image_div.append(img)
+    if (message["type"] === ".image_div") {
+        let target = image_div.parentElement.parentElement.querySelector(".loading");
+        target.style.display = "none";
+    }
 });
 
 
@@ -148,6 +139,12 @@ document.body.onclick = function(e) {  // All mouse clicks event
             target_dropdown.style.display = "inline";
         } else {
             target_dropdown.style.display = "none";
+        }
+
+        // Opening for the first time
+        if (!pages_preview_downloaded.has(e.id)) {
+            pages_preview_downloaded.add(e.id);
+            socket.emit("send_page_preview", e.id);
         }
     }
 

@@ -42,7 +42,7 @@ pbar = None
 MAX_BUFFER_SIZE = 50 * 1000 * 1000  # 50 MB
 
 # Create a Socket.IO server
-sio = socketio.Server(cors_allowed_origins=['http://pdf.pavtiger.com'])
+sio = socketio.Server(cors_allowed_origins=['http://pdf.pavtiger.com'], maxHttpBufferSize=MAX_BUFFER_SIZE)
 app = socketio.WSGIApp(sio, static_files={
     '/': {'content_type': 'text/html', 'filename': 'static/index.html'},
     '/main.css': {'content_type': 'text/css', 'filename': 'static/main.css'},
@@ -62,8 +62,6 @@ process_queue = deque()
 process_index = 0
 
 user_connected = dict()
-
-BAR_LENGTH = 50
 
 
 @dataclass
@@ -155,13 +153,7 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, sio
         image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
         page.save(image_path, 'PNG')  # Save page as an image
 
-    image_data = []
-    for filename_index in range(limit):
-        file_path = os.path.join("static/output/pages", f"page_{filename_index}.jpg")
-        with open(file_path, 'rb') as f:
-            image_data.append(f.read())
-
-    sio.emit("init", {"page_cnt": limit, "image_data": image_data}, room=sid)
+    sio.emit("init", {"page_cnt": limit}, room=sid)
 
     for page_index, page in enumerate(pages[:limit]):
         image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
@@ -180,7 +172,7 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, sio
             with open(cropped_filename, 'rb') as f:
                 image_data = f.read()
 
-            sio.emit("add_table_image", {"page_index": page_index, "image_data": image_data}, room=sid)
+            sio.emit("add_page_image", {"page_index": page_index, "image_data": image_data, "type": ".image_div_table"}, room=sid)
 
             convert_to_csv(cropped_filename, page_index, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
                            user_connected, capture_stdout, sio, sid)
@@ -257,6 +249,16 @@ def download_task(sid, index):
         paths[i] = path.replace('static/', '')
 
     sio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
+
+
+@sio.on("send_page_preview")
+def send_page_preview(sid, index):
+    path = os.path.join('static/output/pages/', f'page_{index}.jpg')
+
+    with open(path, 'rb') as f:
+        image_data = f.read()
+
+    sio.emit('add_page_image', {"image_data": image_data, "page_index": index, "type": ".image_div"}, room=sid)
 
 
 @sio.on('send')
