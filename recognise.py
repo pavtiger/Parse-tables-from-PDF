@@ -10,7 +10,7 @@ import progressbar
 
 import cv2
 import numpy as np
-from pdf2image import convert_from_path
+import fitz
 
 import socketio
 import eventlet
@@ -85,6 +85,7 @@ def check_if_url_exists(url):
 
 def emit_message(message, sid, capture_stdout=True, index=None):
     if capture_stdout:
+        print(f"log: {message}")
         if index is None:
             sio.emit('init_info', {
                 'stdout': message
@@ -142,21 +143,21 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, sio
     for path in ['csv', 'detects', 'pages', 'cropped', 'debug']:
         clear_directory(os.path.join(prefix_path, 'output', path, '*'))
 
-    pages = convert_from_path(pdf_file, quality)
+    document = fitz.open(pdf_file)
 
     if limit == "":
-        limit = len(pages)
+        limit = len(document)
     else:
-        limit = int(limit)
-
-    for page_index, page in enumerate(pages[:limit]):
-        image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
-        page.save(image_path, 'PNG')  # Save page as an image
+        limit = min(int(limit), len(document))
 
     sio.emit("init", {"page_cnt": limit}, room=sid)
 
-    for page_index, page in enumerate(pages[:limit]):
+    for page_index in range(limit):
+        page = document.load_page(page_index)
+        pix = page.get_pixmap(matrix=fitz.Matrix(quality / 72, quality / 72))  # 72 is default scale
+
         image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
+        pix.save(image_path)
 
         detected_cont = detect_table(image_path, page_index, prefix_path)
 
