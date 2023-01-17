@@ -145,6 +145,7 @@ async def convert_to_csv(filename, page_index, output_path, user_connected, capt
             }, room=sid)
 
         if user_connected is not None and not user_connected[sid]:
+            print("User disconnected or pressed stop")
             break
 
     # sio.emit('send_table', {

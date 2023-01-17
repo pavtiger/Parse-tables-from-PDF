@@ -5,12 +5,12 @@ import urllib.request
 import argparse
 from dataclasses import dataclass
 from threading import Thread
-from collections import deque
 import progressbar
 
 import cv2
 import numpy as np
 from pdf2image import convert_from_path
+import fitz
 
 from aiohttp import web
 import socketio
@@ -57,7 +57,6 @@ app.router.add_static('/static', 'static')
 app.router.add_get('/', index)
 
 
-process_queue = deque()
 process_index = 0
 
 user_connected = dict()
@@ -142,21 +141,22 @@ async def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=Non
     for path in ['csv', 'detects', 'pages', 'cropped', 'debug']:
         clear_directory(os.path.join(prefix_path, 'output', path, '*'))
 
-    pages = convert_from_path(pdf_file, quality)
+    document = fitz.open(pdf_file)
 
     if limit == "":
-        limit = len(pages)
+        limit = len(document)
     else:
-        limit = int(limit)
+        limit = min(int(limit), len(document))
 
-    for page_index, page in enumerate(pages[:limit]):
-        image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
-        page.save(image_path, 'PNG')  # Save page as an image
 
     await sio.emit("init", {"page_cnt": limit}, room=sid)
 
-    for page_index, page in enumerate(pages[:limit]):
+    for page_index in range(limit):
+        page = document.load_page(page_index)
+        pix = page.get_pixmap(matrix=fitz.Matrix(quality / 72, quality / 72))  # 72 is default scale
+
         image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
+        pix.save(image_path)
 
         detected_cont = detect_table(image_path, page_index, prefix_path)
 
@@ -188,15 +188,12 @@ async def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=Non
 
 
 async def process_by_link(link, quality, limit, sid, download_on_finish):
-    print("hello there")
     prefix_path = 'static/'
     await emit_message('Downloading document and rendering pages', sid)
 
     pdf_file = os.path.join(prefix_path, f"output/processed_documents/remote_document_{process_index}.pdf")
     if check_if_url_exists(link):
-        print("download started")
         urllib.request.urlretrieve(link, pdf_file)
-        print("download finished")
     else:
         await emit_message('There is a problem loading file from this link. Check if it is correct\n', sid)
         return False
@@ -271,21 +268,10 @@ async def get_data(sid, message):
     if not message['link'].lower().startswith('http'):
         return
 
-    if len(process_queue) > 0:
-        for elem in process_queue:
-            if elem['sid'] == sid:
-                await sio.emit('init_info', {'stdout': 'You already have an ongoing request'},
-                              room=sid)
-                return
-
-        await sio.emit('init_info', {'stdout': 'Server busy. Please wait'}, room=sid)
-
     user_connected[sid] = True
-
     print(f'Started processing of {sid, message}')
+
     sio.start_background_task(process_by_link, message['link'], server_quality, message['limit'], sid, message['download_results'])
-    # process_by_link(message['link'], server_quality, message['limit'], sid, message['download_results'])
-    print(f'Processing of {sid} ended')
 
 
 async def show_progress(block_num, block_size, total_size):
@@ -307,8 +293,8 @@ async def send_ping():
     while True:
         for user in user_connected.keys():
             if user_connected[user]:
-                print(f"ping {user}")
-                if last_seen[user] != None and int(time.time() * 1000) - last_seen[user] >= 20000:
+                # print(f"ping {user}")
+                if last_seen[user] is not None and int(time.time() * 1000) - last_seen[user] >= 20000:
                     user_connected[user] = False
                     print(f"User {user} deleted due to inactivity")
                     break
@@ -359,18 +345,8 @@ if __name__ == "__main__":
         os.makedirs('static/output/processed_documents', exist_ok=True)
         clear_directory('static/output/processed_documents/remote_document_*')
 
-        # x = Thread(target=process_caller, args=())
-        # x.start()
-
-        # y = Thread(target=send_ping, args=())
-        # y.start()
-
-        # task = sio.start_background_task(send_ping)
-
         print(f"Listening on http://{ip_address}:{port}")
         web.run_app(init_app(), host=ip_address, port=port)
-
-        # eventlet.wsgi.server(eventlet.listen((ip_address, port)), app)
 
     else:
         print('You need to specify call type: -s/--server or -c/--client')
