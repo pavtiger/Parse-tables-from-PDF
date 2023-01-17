@@ -9,7 +9,6 @@ import progressbar
 
 import cv2
 import numpy as np
-from pdf2image import convert_from_path
 import fitz
 
 from aiohttp import web
@@ -84,6 +83,7 @@ def check_if_url_exists(url):
 
 async def emit_message(message, sid, capture_stdout=True, index=None):
     if capture_stdout:
+        print(f"log: {message}")
         if index is None:
             await sio.emit('init_info', {
                 'stdout': message
@@ -148,8 +148,8 @@ async def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=Non
     else:
         limit = min(int(limit), len(document))
 
-
     await sio.emit("init", {"page_cnt": limit}, room=sid)
+
 
     for page_index in range(limit):
         page = document.load_page(page_index)
