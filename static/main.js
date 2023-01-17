@@ -1,11 +1,12 @@
-const socket = io("ws://" + window.location.hostname + ":" + window.location.port);
+const socket = io("http://" + window.location.hostname + ":" + window.location.port);
 
 let start_time, processing_in_progress = false;
 let form = document.forms.submit_link;
 let pages_preview_downloaded = new Set();
 
 
-socket.on("pingclient", function() {
+socket.on("pingclient", function(sid) {
+    console.log(sid)
     socket.emit("pingserver");
 });
 
@@ -72,7 +73,7 @@ socket.on("init", function(message) {
             '                    <div class="button-placeholder centered"><div class="button_text">Download</div></div>' +
             '                </div></div>\n' +
             '                <div class="col-lg-1 col-md-1 col-sm-2 col-2">\n' +
-            '                    <div class="p-1 expand_elem"><input class="dropdown" type="image" src="expand.png" alt="Input"> </div>\n' +
+            '                    <div class="p-1 expand_elem"><input class="dropdown" type="image" src="static/expand.png" alt="Input"> </div>\n' +
             '                </div>\n' +
             '            </div>\n' +
             '\n' +
