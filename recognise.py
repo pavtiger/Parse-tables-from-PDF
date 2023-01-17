@@ -5,13 +5,13 @@ import urllib.request
 import argparse
 from dataclasses import dataclass
 from threading import Thread
-from collections import deque
 import progressbar
 
 import cv2
 import numpy as np
 import fitz
 
+from aiohttp import web
 import socketio
 import eventlet
 from flask import Flask, send_from_directory, render_template, request
@@ -42,26 +42,24 @@ pbar = None
 MAX_BUFFER_SIZE = 50 * 1000 * 1000  # 50 MB
 
 # Create a Socket.IO server
-sio = socketio.Server(cors_allowed_origins=['http://pdf.pavtiger.com'], maxHttpBufferSize=MAX_BUFFER_SIZE)
-app = socketio.WSGIApp(sio, static_files={
-    '/': {'content_type': 'text/html', 'filename': 'static/index.html'},
-    '/main.css': {'content_type': 'text/css', 'filename': 'static/main.css'},
-    # Javascript
-    '/main.js': {'content_type': 'text/javascript', 'filename': 'static/main.js'},
-    '/img_box.js': {'content_type': 'text/javascript', 'filename': 'static/img_box.js'},
-    '/socket.io.min.js': {'content_type': 'text/javascript', 'filename': 'static/socket.io.min.js'},
-    # Fonts
-    '/font.ttf': {'content_type': 'text/ttf', 'filename': 'static/font.ttf'},
-    # Images
-    '/icon.png': {'content_type': 'image/png', 'filename': 'static/icon.png'},
-    '/expand.png': {'content_type': 'image/png', 'filename': 'static/expand.png'},
-    '/output/csv': 'static/output/csv'
-})
+sio = socketio.AsyncServer(async_mode='aiohttp', cors_allowed_origins=['http://pdf.pavtiger.com'],
+                           maxHttpBufferSize=MAX_BUFFER_SIZE, async_handlers=True)
+app = web.Application()
+sio.attach(app)
 
-process_queue = deque()
+# Static files server
+async def index(request):
+    with open('static/index.html') as f:
+        return web.Response(text=f.read(), content_type='text/html')
+
+app.router.add_static('/static', 'static')
+app.router.add_get('/', index)
+
+
 process_index = 0
 
 user_connected = dict()
+last_seen = dict()
 
 
 @dataclass
@@ -83,15 +81,15 @@ def check_if_url_exists(url):
         return False
 
 
-def emit_message(message, sid, capture_stdout=True, index=None):
+async def emit_message(message, sid, capture_stdout=True, index=None):
     if capture_stdout:
         print(f"log: {message}")
         if index is None:
-            sio.emit('init_info', {
+            await sio.emit('init_info', {
                 'stdout': message
             }, room=sid)
         else:
-            sio.emit('progress', {
+            await sio.emit('progress', {
                 'stdout': message,
                 'index': index
             }, room=sid)
@@ -134,7 +132,7 @@ def detect_table(filename, page, prefix_path):
     return table_coords
 
 
-def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, sio=None, user_connected=None):
+async def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, sio=None, user_connected=None):
     # Create directories if non-existent
     for path in ['', 'csv', 'detects', 'pages', 'cropped', 'debug']:
         os.makedirs(os.path.join(prefix_path, 'output', path), exist_ok=True)
@@ -150,7 +148,8 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, sio
     else:
         limit = min(int(limit), len(document))
 
-    sio.emit("init", {"page_cnt": limit}, room=sid)
+    await sio.emit("init", {"page_cnt": limit}, room=sid)
+
 
     for page_index in range(limit):
         page = document.load_page(page_index)
@@ -173,35 +172,35 @@ def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=None, sio
             with open(cropped_filename, 'rb') as f:
                 image_data = f.read()
 
-            sio.emit("add_page_image", {"page_index": page_index, "image_data": image_data, "type": ".image_div_table"}, room=sid)
+            await sio.emit("add_page_image", {"page_index": page_index, "image_data": image_data, "type": ".image_div_table"}, room=sid)
 
-            convert_to_csv(cropped_filename, page_index, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
+            await convert_to_csv(cropped_filename, page_index, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
                            user_connected, capture_stdout, sio, sid)
 
             if user_connected is not None and user_connected[sid]:
-                sio.emit('processing_finished', {'index': page_index}, room=sid)
+                await sio.emit('processing_finished', {'index': page_index}, room=sid)
 
         else:
-            sio.emit('nothing_found_on_page', {'index': page_index}, room=sid)
+            await sio.emit('nothing_found_on_page', {'index': page_index}, room=sid)
 
         if user_connected is not None and not user_connected[sid]:
             break
 
 
-def process_by_link(link, quality, limit, sid, download_on_finish):
+async def process_by_link(link, quality, limit, sid, download_on_finish):
     prefix_path = 'static/'
-    emit_message('Downloading document and rendering pages', sid)
+    await emit_message('Downloading document and rendering pages', sid)
 
     pdf_file = os.path.join(prefix_path, f"output/processed_documents/remote_document_{process_index}.pdf")
     if check_if_url_exists(link):
         urllib.request.urlretrieve(link, pdf_file)
     else:
-        emit_message('There is a problem loading file from this link. Check if it is correct\n', sid)
+        await emit_message('There is a problem loading file from this link. Check if it is correct\n', sid)
         return False
 
     # Main spreadsheet processing
-    emit_message('Processing started', sid)
-    process(prefix_path, pdf_file, quality, limit, True, sid, sio, user_connected)
+    await emit_message('Processing started', sid)
+    await process(prefix_path, pdf_file, quality, limit, True, sid, sio, user_connected)
 
     if download_on_finish:
         # Send download paths
@@ -210,95 +209,72 @@ def process_by_link(link, quality, limit, sid, download_on_finish):
         for file in glob(os.path.join(target_directory, '*.csv')):
             paths.append(file)
 
-        for i, path in enumerate(paths):
-            paths[i] = path.replace(prefix_path, '')
-
-        emit_message("Processing finished, starting download", sid)
-        sio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
+        await emit_message("Processing finished, starting download", sid)
+        await sio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
     else:
-        sio.emit('work_finish', {"download": False, "paths": []}, room=sid)
+        await sio.emit('work_finish', {"download": False, "paths": []}, room=sid)
 
     return True
 
 
 @sio.event
-def connect(sid, environ):
+async def connect(sid, environ):
     user_connected[sid] = True
+    last_seen[sid] = int(time.time() * 1000)
 
 
 @sio.event
-def connect_error(sid, data):
+async def connect_error(sid, data):
     print("The connection failed!")
 
 
 @sio.event
-def disconnect(sid):
+async def disconnect(sid):
     user_connected[sid] = False
+    await sio.disconnect(sid)
 
 
 @sio.event
-def stop(sid):
+async def stop(sid):
     user_connected[sid] = False
 
 
+@sio.on('pingserver')
+async def pingserver(sid):
+    if sid in last_seen.keys():
+        last_seen[sid] = int(time.time() * 1000)
+
+
 @sio.on("download_task")
-def download_task(sid, index):
+async def download_task(sid, index):
     index = str(int(index) + 1)
     paths = [os.path.join('static/output/csv/', f'export_table_page_{index}.csv')]
 
-    for i, path in enumerate(paths):
-        paths[i] = path.replace('static/', '')
-
-    sio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
+    await sio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
 
 
 @sio.on("send_page_preview")
-def send_page_preview(sid, index):
+async def send_page_preview(sid, index):
     path = os.path.join('static/output/pages/', f'page_{index}.jpg')
 
     with open(path, 'rb') as f:
         image_data = f.read()
 
-    sio.emit('add_page_image', {"image_data": image_data, "page_index": index, "type": ".image_div"}, room=sid)
+    await sio.emit('add_page_image', {"image_data": image_data, "page_index": index, "type": ".image_div"}, room=sid)
 
 
 @sio.on('send')
-def get_data(sid, message):
+async def get_data(sid, message):
     if not message['link'].lower().startswith('http'):
         return
 
-    if len(process_queue) > 0:
-        for elem in process_queue:
-            if elem['sid'] == sid:
-                sio.emit('init_info', {'stdout': 'You already have an ongoing request'},
-                              room=sid)
-                return
-
-        sio.emit('init_info', {'stdout': 'Server busy. Please wait'}, room=sid)
-
     user_connected[sid] = True
-    process_queue.append({'sid': sid, 'message': message})
+    print(f'Started processing of {sid, message}')
+
+    sio.start_background_task(process_by_link, message['link'], server_quality, message['limit'], sid, message['download_results'])
 
 
-def process_caller():
-    global process_index, process_queue
-
-    while True:
-        if len(process_queue) > 0:
-            item = process_queue[0]
-            print(f'Started processing of {item}')
-
-            process_by_link(item['message']['link'], server_quality, item['message']['limit'], item['sid'],
-                            item['message']['download_results'])
-            print('Processing ended')
-
-            process_index += 1
-            process_queue.popleft()
-
-        time.sleep(1)
-
-
-def show_progress(block_num, block_size, total_size):
+async def show_progress(block_num, block_size, total_size):
     global pbar
     if pbar is None:
         pbar = progressbar.ProgressBar(maxval=total_size)
@@ -310,6 +286,26 @@ def show_progress(block_num, block_size, total_size):
     else:
         pbar.finish()
         pbar = None
+
+
+async def send_ping():
+    print("start")
+    while True:
+        for user in user_connected.keys():
+            if user_connected[user]:
+                # print(f"ping {user}")
+                if last_seen[user] is not None and int(time.time() * 1000) - last_seen[user] >= 20000:
+                    user_connected[user] = False
+                    print(f"User {user} deleted due to inactivity")
+                    break
+
+            await sio.emit('pingclient', user, room=user)
+        await sio.sleep(1)
+
+
+async def init_app():
+    sio.start_background_task(send_ping)
+    return app
 
 
 if __name__ == "__main__":
@@ -343,16 +339,14 @@ if __name__ == "__main__":
             process('', pdf_file, quality, int(args["limit"]), False)
             print('Task finished')
 
+
     elif args['server']:
         eventlet.monkey_patch()
         os.makedirs('static/output/processed_documents', exist_ok=True)
         clear_directory('static/output/processed_documents/remote_document_*')
 
-        x = Thread(target=process_caller, args=())
-        x.start()
-
         print(f"Listening on http://{ip_address}:{port}")
-        eventlet.wsgi.server(eventlet.listen((ip_address, 1500)), app)
+        web.run_app(init_app(), host=ip_address, port=port)
 
     else:
         print('You need to specify call type: -s/--server or -c/--client')

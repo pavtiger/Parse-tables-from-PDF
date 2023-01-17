@@ -15,7 +15,7 @@ body {
 
 @font-face {
     font-family: terminal;
-    src: url('/font.ttf') format('truetype');
+    src: url('/static/font.ttf') format('truetype');
 }
 
 #console {
