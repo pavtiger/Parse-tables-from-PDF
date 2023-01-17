@@ -5,6 +5,10 @@ let form = document.forms.submit_link;
 let pages_preview_downloaded = new Set();
 
 
+socket.on("pingclient", function() {
+    socket.emit("pingserver");
+});
+
 socket.on("progress", function(message) {
     let border = document.getElementById(message["index"]).querySelector(".slider_border");
     let progress_bar = border.querySelector(".slider");
