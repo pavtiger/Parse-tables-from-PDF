@@ -62,6 +62,7 @@ process_queue = deque()
 process_index = 0
 
 user_connected = dict()
+last_seen = dict()
 
 
 @dataclass
@@ -194,7 +195,9 @@ def process_by_link(link, quality, limit, sid, download_on_finish):
 
     pdf_file = os.path.join(prefix_path, f"output/processed_documents/remote_document_{process_index}.pdf")
     if check_if_url_exists(link):
+        print("download started")
         urllib.request.urlretrieve(link, pdf_file)
+        print("download finished")
     else:
         emit_message('There is a problem loading file from this link. Check if it is correct\n', sid)
         return False
@@ -224,6 +227,7 @@ def process_by_link(link, quality, limit, sid, download_on_finish):
 @sio.event
 def connect(sid, environ):
     user_connected[sid] = True
+    last_seen[sid] = int(time.time() * 1000)
 
 
 @sio.event
@@ -239,6 +243,12 @@ def disconnect(sid):
 @sio.event
 def stop(sid):
     user_connected[sid] = False
+
+
+@sio.on('pingserver')
+def pingserver(sid):
+    if sid in last_seen.keys():
+        last_seen[sid] = int(time.time() * 1000)
 
 
 @sio.on("download_task")
@@ -312,6 +322,19 @@ def show_progress(block_num, block_size, total_size):
         pbar = None
 
 
+def send_ping():
+    while True:
+        for user in user_connected.keys():
+            if user_connected[user]:
+                if last_seen[user] != None and int(time.time() * 1000) - last_seen[user] >= 20000:
+                    user_connected[user] = False
+                    print(f"User {user} deleted due to inactivity")
+                    break
+
+        sio.emit('pingclient')
+        time.sleep(5)
+
+
 if __name__ == "__main__":
     if args["client"]:
         if args["remote"] == "" and args["input"] == "":
@@ -343,6 +366,7 @@ if __name__ == "__main__":
             process('', pdf_file, quality, int(args["limit"]), False)
             print('Task finished')
 
+
     elif args['server']:
         eventlet.monkey_patch()
         os.makedirs('static/output/processed_documents', exist_ok=True)
@@ -351,8 +375,11 @@ if __name__ == "__main__":
         x = Thread(target=process_caller, args=())
         x.start()
 
+        y = Thread(target=send_ping, args=())
+        y.start()
+
         print(f"Listening on http://{ip_address}:{port}")
-        eventlet.wsgi.server(eventlet.listen((ip_address, 1500)), app)
+        eventlet.wsgi.server(eventlet.listen((ip_address, port)), app)
 
     else:
         print('You need to specify call type: -s/--server or -c/--client')
