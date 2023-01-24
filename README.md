@@ -7,18 +7,37 @@ recognises where tables are and then proceeds to transfer them to csv. Using pyt
 
 You can use this tool by either directly running the python script along with some flags or by running a Web server that will host a web page for uploading files to procees them on server and return the csv files. Whilst displaying the current progress.
 
-Here's the front page
-![image](https://user-images.githubusercontent.com/36619129/176673780-6ea4bd77-7f36-42f2-bfba-b199e533f29f.png)
+Here's the front page  
+<img src="readme_images/front_page.png" alt="front_page" width="100%"/>
+
+While processing, it displays processing status for each page and gives you option to download each one individually, or altogether at the end  
+<img src="readme_images/processing.png" alt="processing" width="100%"/>
+
+## Example results
+Input table as an image in PDF file  
+<img src="readme_images/input.png" alt="original" width="60%"/>  
+Parsed table  
+<img src="readme_images/output.png" alt="threshold" width="60%"/>
 
 ## Installation
-Linux using `apt`
+Required python libraries
 ```shell
-# Required
-sudo apt install tesseract-ocr tesseract-ocr-rus
-sudo pip install pytesseract opencv-python tqdm progressbar pdf2image
+pip install pytesseract opencv-python tqdm progressbar pdf2image pymupdf fitz
 
 # Optional for webserver
-sudo pip install flask flask-socketio eventlet
+pip install aiohttp eventlet
+```
+
+Tesseract installation on Linux using `apt`
+```shell
+sudo apt install tesseract-ocr tesseract-ocr-rus
+```
+
+Linux using `pacman`
+```shell
+sudo pacman -S poppler
+sudo pacman -S tesseract  # Select needed language, for example rus - 94
+sudo pacman -S tesseract-data-rus tesseract-data-eng
 ```
 
 Windows

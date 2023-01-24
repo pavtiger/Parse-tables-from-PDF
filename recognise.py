@@ -16,7 +16,7 @@ import socketio
 import eventlet
 from flask import Flask, send_from_directory, render_template, request
 
-from config import ip_address, port, server_quality
+from config import ip_address, port, server_quality, cors_allowed_origins
 from parse_table import convert_to_csv
 
 
@@ -42,7 +42,7 @@ pbar = None
 MAX_BUFFER_SIZE = 50 * 1000 * 1000  # 50 MB
 
 # Create a Socket.IO server
-sio = socketio.AsyncServer(async_mode='aiohttp', cors_allowed_origins=['http://pdf.pavtiger.com'],
+sio = socketio.AsyncServer(async_mode='aiohttp', cors_allowed_origins=cors_allowed_origins,
                            maxHttpBufferSize=MAX_BUFFER_SIZE, async_handlers=True)
 app = web.Application()
 sio.attach(app)
@@ -289,7 +289,6 @@ async def show_progress(block_num, block_size, total_size):
 
 
 async def send_ping():
-    print("start")
     while True:
         for user in user_connected.keys():
             if user_connected[user]:
