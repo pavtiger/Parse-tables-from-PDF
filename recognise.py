@@ -41,6 +41,10 @@ args = vars(ap.parse_args())
 pbar = None
 MAX_BUFFER_SIZE = 50 * 1000 * 1000  # 50 MB
 
+# urlib request options
+user_agent = 'Mozilla/5.0'
+headers = {'User-Agent': user_agent,}
+
 # Create a Socket.IO server
 sio = socketio.Server(cors_allowed_origins=['http://pdf.pavtiger.com'], maxHttpBufferSize=MAX_BUFFER_SIZE)
 app = socketio.WSGIApp(sio, static_files={
@@ -75,7 +79,8 @@ class Rect:
 
 def check_if_url_exists(url):
     try:
-        u = urllib.request.urlopen(url)
+        request = urllib.request.Request(url, None, headers)
+        u = urllib.request.urlopen(request)
         u.close()
         return True
 
@@ -194,8 +199,14 @@ def process_by_link(link, quality, limit, sid, download_on_finish):
     emit_message('Downloading document and rendering pages', sid)
 
     pdf_file = os.path.join(prefix_path, f"output/processed_documents/remote_document_{process_index}.pdf")
+    print(link)
     if check_if_url_exists(link):
         print("download started")
+
+        opener = urllib.request.build_opener()
+        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+        urllib.request.install_opener(opener)
+
         urllib.request.urlretrieve(link, pdf_file)
         print("download finished")
     else:
