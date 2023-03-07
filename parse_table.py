@@ -15,7 +15,9 @@ except ImportError:
     import Image
 import pytesseract
 
-DEBUG_MODE = False
+from config import debug_mode
+
+
 BAR_LENGTH = 50
 
 
@@ -104,7 +106,7 @@ async def convert_to_csv(filename, page_index, output_path, user_connected, capt
     for ind, cnt in iterate_obj:
         x, y, w, h = cv2.boundingRect(cnt)
         if (w * h) > (width * height * 0.75):
-            continue  # Continue if the contour is the whole table
+            continue  # Skip if the contour is the whole table itself
 
         cropped_image = raw_image[y:y + h, x: x + w]
 
@@ -132,13 +134,12 @@ async def convert_to_csv(filename, page_index, output_path, user_connected, capt
         # conf = text.groupby(['block_num'])['conf'].mean()
         row.append(Cell(x, y, w, h, text, 0))
 
-        if DEBUG_MODE:  # Show a window with the image we are trying to recognise
+        if debug_mode:  # Show a window with the image we are trying to recognise
             cv2.namedWindow("output", cv2.WINDOW_NORMAL)  # Create window with freedom of dimensions
             cv2.imshow("output", cropped_image)  # Show image
             cv2.waitKey(0)
 
         if capture_stdout:
-            # progress_bar = '⬛' * int(BAR_LENGTH * (ind / len(cont)))
             await sio.emit('progress', {
                 'stdout': int(ind / len(cont) * 100),
                 'index': page_index
