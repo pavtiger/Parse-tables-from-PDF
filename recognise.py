@@ -11,6 +11,7 @@ import cv2
 import numpy as np
 import fitz
 
+import asyncio
 from aiohttp import web
 import socketio
 import eventlet
@@ -153,7 +154,8 @@ async def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=Non
     else:
         limit = min(int(limit), len(document))
 
-    await sio.emit("init", {"page_cnt": limit}, room=sid)
+    if capture_stdout:
+        await sio.emit("init", {"page_cnt": limit}, room=sid)
 
 
     for page_index in range(limit):
@@ -173,16 +175,17 @@ async def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=Non
             cropped_filename = f"{prefix_path}output/cropped/cropped_table_{page_index + 1}.jpg"
             cv2.imwrite(cropped_filename, cropped)
 
-            # Send current page to the user
-            with open(cropped_filename, 'rb') as f:
-                image_data = f.read()
+            if capture_stdout:
+                # Send current page to the user
+                with open(cropped_filename, 'rb') as f:
+                    image_data = f.read()
 
-            await sio.emit("add_page_image", {"page_index": page_index, "image_data": image_data, "type": ".image_div_table"}, room=sid)
+                await sio.emit("add_page_image", {"page_index": page_index, "image_data": image_data, "type": ".image_div_table"}, room=sid)
 
             await convert_to_csv(cropped_filename, page_index, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
-                           user_connected, capture_stdout, sio, sid)
+                       user_connected, capture_stdout, sio, sid)
 
-            if user_connected is not None and user_connected[sid]:
+            if capture_stdout and user_connected is not None and user_connected[sid]:
                 await sio.emit('processing_finished', {'index': page_index}, room=sid)
 
         else:
@@ -316,37 +319,43 @@ async def init_app():
     return app
 
 
+async def client_main(args):
+    if args["remote"] == "" and args["input"] == "":
+        print("You need to specify either link to a remote pdf file (--remote https://somewebsite.com) or local "
+              "file (--input filepath/file.pdf)")
+
+    else:
+        quality = int(args["quality"])
+        if quality < 200:
+            print('Quality is set to a number smaller than 200. THis is highly unadvised and '
+                  'will cause recognition errors')
+            print('Change quality to 200? [Y/n]')
+
+            if input().lower() != 'n':
+                quality = 200
+
+        pdf_file = ""
+        if args["input"] == "":
+            # Remote file
+            pdf_file = "output/remote_document.pdf"
+            print("File download started")
+            urllib.request.urlretrieve(args["remote"], pdf_file, show_progress)
+            print()
+        else:
+            # Local file
+            pdf_file = args["input"]
+
+        if int(args["limit"]) == -1:
+            args["limit"] = ""
+
+        print('Processing started\n')
+        await process('', pdf_file, quality, args["limit"], False)
+        print('Task finished')
+
+
 if __name__ == "__main__":
     if args["client"]:
-        if args["remote"] == "" and args["input"] == "":
-            print("You need to specify either link to a remote pdf file (--remote https://somewebsite.com) or local "
-                  "file (--input filepath/file.pdf)")
-
-        else:
-            quality = int(args["quality"])
-            if quality < 200:
-                print('Quality is set to a number smaller than 200. THis is highly unadvised and '
-                      'will cause recognition errors')
-                print('Change quality to 200? [Y/n]')
-
-                if input().lower() != 'n':
-                    quality = 200
-
-            pdf_file = ""
-            if args["input"] == "":
-                # Remote file
-                pdf_file = "output/remote_document.pdf"
-                print("File download started")
-                urllib.request.urlretrieve(args["remote"], pdf_file, show_progress)
-                print()
-            else:
-                # Local file
-                pdf_file = args["input"]
-
-            print('Processing started\n')
-            process('', pdf_file, quality, int(args["limit"]), False)
-            print('Task finished')
-
+        asyncio.run(client_main(args))
 
     elif args['server']:
         eventlet.monkey_patch()
