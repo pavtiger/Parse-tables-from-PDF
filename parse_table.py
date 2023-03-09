@@ -1,5 +1,6 @@
 import cv2
 import io
+import os
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -54,7 +55,11 @@ def extract_value(x):
     return x[0].text
 
 
-async def convert_to_csv(filename, page_index, output_path, user_connected, capture_stdout, sio=None, sid=None):
+async def convert_to_csv(filename, page_index, output_path, prefix_path, user_connected, capture_stdout, sio=None, sid=None):
+    # Create page render debug directory
+    debug_dir = f"{prefix_path}output/debug/cells_{str(page_index).zfill(4)}"
+    os.makedirs(debug_dir, exist_ok=True)
+
     im = imgread(filename)
     width, height, _ = im.shape
 
@@ -109,6 +114,7 @@ async def convert_to_csv(filename, page_index, output_path, user_connected, capt
             continue  # Skip if the contour is the whole table itself
 
         cropped_image = raw_image[y:y + h, x: x + w]
+        cv2.imwrite(os.path.join(debug_dir, f"box_{str(ind).zfill(4)}.jpg"), cropped_image)
 
         # Parse text
         text = pytesseract.image_to_string(cropped_image, lang="rus", config="--psm 4")

@@ -6,6 +6,7 @@ import argparse
 from dataclasses import dataclass
 from threading import Thread
 import progressbar
+import shutil
 
 import cv2
 import numpy as np
@@ -106,7 +107,10 @@ async def emit_message(message, sid, capture_stdout=True, index=None):
 def clear_directory(path):
     files = glob(path)
     for f in files:
-        os.remove(f)
+        if os.path.isfile(f):
+            os.remove(f)
+        else:
+            shutil.rmtree(f)
 
 
 def order_points(pts):
@@ -254,7 +258,7 @@ async def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=Non
                 await sio.emit("add_page_image", {"page_index": page_index, "image_data": image_data, "type": ".image_div_table"}, room=sid)
 
             await convert_to_csv(cropped_filename, page_index, f"{prefix_path}output/csv/export_table_page_{page_index + 1}.csv",
-                       user_connected, capture_stdout, sio, sid)
+                       prefix_path, user_connected, capture_stdout, sio, sid)
 
             if capture_stdout and user_connected is not None and user_connected[sid]:
                 await sio.emit('processing_finished', {'index': page_index}, room=sid)
