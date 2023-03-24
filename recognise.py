@@ -235,7 +235,7 @@ async def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=Non
 
     for page_index in range(limit):
         page = document.load_page(page_index)
-        pix = page.get_pixmap(matrix=fitz.Matrix(quality / 72, quality / 72))  # 72 is default scale
+        pix = page.get_pixmap(matrix=fitz.Matrix(quality, quality))  # 72 is default scale
 
         image_path = f'{prefix_path}output/pages/page_{page_index}.jpg'
         pix.save(image_path)
@@ -438,7 +438,7 @@ if __name__ == "__main__":
         clear_directory('static/output/processed_documents/remote_document_*')
 
         print(f"Listening on http://{ip_address}:{port}")
-        web.run_app(init_app(), host=ip_address, port=port)
+        web.run_app(app, host=ip_address, port=port)
 
     else:
         print('You need to specify call type: -s/--server or -c/--client')
