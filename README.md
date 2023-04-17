@@ -22,7 +22,7 @@ Parsed table
 ## Installation
 Required python libraries
 ```shell
-pip install pytesseract opencv-python tqdm progressbar pdf2image pymupdf fitz
+pip install pytesseract opencv-python tqdm progressbar pdf2image pymupdf fitz frontend tools
 
 # Optional for webserver
 pip install aiohttp eventlet
