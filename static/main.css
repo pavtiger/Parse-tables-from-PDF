@@ -7,7 +7,8 @@ canvas {
 
 body {
     margin: 0;
-    overflow: hidden;
+    height: 100%;
+    // overflow: hidden;
     background: #000;
     color: floralwhite;
     padding: 0;
@@ -31,6 +32,18 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+#bottom_container {
+    height: 12%;
+    position: fixed;
+    bottom: 0%;
+    width: 100%;
+    opacity: 1;
+}
+
+#source_link {
+    padding: 0px 0px 10px 30px;
 }
 
 #form {
