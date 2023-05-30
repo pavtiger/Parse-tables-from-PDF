@@ -8,7 +8,7 @@ canvas {
 body {
     margin: 0;
     height: 100%;
-    // overflow: hidden;
+    overflow: hidden;
     background: #000;
     color: floralwhite;
     padding: 0;
@@ -34,6 +34,7 @@ body {
     align-items: center;
 }
 
+/* Github source link */
 #bottom_container {
     height: 12%;
     position: fixed;
@@ -43,7 +44,13 @@ body {
 }
 
 #source_link {
-    padding: 0px 0px 10px 30px;
+    padding-bottom: 10px;
+    padding-left: 30px;
+}
+
+#github_logo {
+    -webkit-filter: drop-shadow(5px 5px 5px #111);
+    filter: drop-shadow(6px 8px 12px #111);
 }
 
 #form {
