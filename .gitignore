@@ -140,3 +140,8 @@ static/output/processed_documents/*
 
 log
 config.py
+
+.idea/*.iws
+.idea/workspace.xml
+.idea/tasks.xml
+
