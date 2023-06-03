@@ -4,7 +4,6 @@ let start_time, processing_in_progress = false;
 let form = document.forms.submit_link;
 let pages_preview_downloaded = new Set();
 
-
 socket.on("pingclient", function(sid) {
     console.log(sid)
     socket.emit("pingserver");
@@ -65,40 +64,39 @@ socket.on("nothing_found_on_page", function(message) {
 socket.on("init", function(message) {
     let console_div = document.getElementById("console");
     for (let table_ind = 0; table_ind < message["page_cnt"]; ++table_ind) {
-        let header = htmlToElements('<div class="row header align-items-center border" style="height: 10%">\n' +
-            '                <div class="col-lg-1 col-md-1 col-sm-1 col-1"><div class="p-0 page_index">' + (table_ind + 1).toString() + '</div></div>\n' +
-            '                <div class="col-lg-7 col-md-7 col-sm-5 col-5 align-items-center"><div class="p-3 slider_border" style="background: #111; background-clip: content-box; border-radius: 5px">\n' +
-            '                </div></div>\n' +
-            '                <div class="col-lg-3 col-md-3 col-sm-4 col-4"><div class="p-2 download_div">' +
-            '                    <div class="button-placeholder centered"><div class="button_text">Download</div></div>' +
-            '                </div></div>\n' +
-            '                <div class="col-lg-1 col-md-1 col-sm-2 col-2">\n' +
-            '                    <div class="p-1 expand_elem"><input class="dropdown" type="image" src="static/expand.png" alt="Input"> </div>\n' +
-            '                </div>\n' +
-            '            </div>\n' +
-            '\n' +
-            '            <div class="container main_body">\n' +
-            '                <div class="loading">Loading image...</div>\n' +
-            '                <div class="col-lg-5 image">\n' +
-            '                    <div class="image_div"></div>\n' +
-            '                </div>\n' +
-            '                <div class="col-lg-5 image">\n' +
-            '                    <div class="image_div_table"></div>\n' +
-            '                </div>\n' +
-            '            </div>');
+            let header = htmlToElements('<div class="row header align-items-center border" style="height: 10%">\n' +
+                '                <div class="col-lg-1 col-md-1 col-sm-1 col-1"><div class="p-0 page_index">' + (table_ind + 1).toString() + '</div></div>\n' +
+                '                <div class="col-lg-7 col-md-7 col-sm-5 col-5 align-items-center"><div class="p-3 slider_border" style="background: #111; background-clip: content-box; border-radius: 5px">\n' +
+                '                </div></div>\n' +
+                '                <div class="col-lg-3 col-md-3 col-sm-4 col-4"><div class="p-2 download_div">' +
+                '                    <div class="button-placeholder centered"><div class="button_text">Download</div></div>' +
+                '                </div></div>\n' +
+                '                <div class="col-lg-1 col-md-1 col-sm-2 col-2">\n' +
+                '                    <div class="p-1 expand_elem"><input class="dropdown" type="image" src="static/expand.png" alt="Input"> </div>\n' +
+                '                </div>\n' +
+                '            </div>\n' +
+                '\n' +
+                '            <div class="container main_body">\n' +
+                '                <div class="loading">Loading image...</div>\n' +
+                '                <div class="col-lg-5 image">\n' +
+                '                    <div class="image_div"></div>\n' +
+                '                </div>\n' +
+                '                <div class="col-lg-5 image">\n' +
+                '                    <div class="image_div_table"></div>\n' +
+                '                </div>\n' +
+                '            </div>');
+            let div = document.createElement("div");
+            div.id = table_ind.toString();
+            div.style.height = "40%"
 
-        let div = document.createElement("div");
-        div.id = table_ind.toString();
-        div.style.height = "40%"
+            for (let i = 0; i < header.length; i++) {
+                div.appendChild(header[i])
+            }
 
-        for (let i = 0; i < header.length; i++) {
-            div.appendChild(header[i])
-        }
+            console_div.append(div);
 
-        console_div.append(div);
-
-        let target_dropdown = div.querySelector(".main_body");
-        target_dropdown.style.display = "none";
+            let target_dropdown = div.querySelector(".main_body");
+            target_dropdown.style.display = "none";
     }
 });
 
@@ -182,7 +180,13 @@ socket.on("work_finish", function(message) {  // Receive and download results
             document.body.removeChild(a);
         });
     }
+    if (processing_in_progress) {
+        let init_info_1 = document.getElementById("init_info_1");
+        init_info_1.innerHTML = "";
+        init_info_1.innerHTML = '<div style="color:green;font-size:50px;font-family: terminal, sans-serif;justify-content: center;align-items: center;display: flex;">Processing finished</div>'
+    }
     processing_in_progress = false;
+    
 });
 
 
@@ -192,7 +196,7 @@ form.addEventListener("submit", (e) => {  // Submit button press event
     let console_element = document.getElementById("init_info");
 
     if (processing_in_progress) {
-        console_element.innerHTML += "You already have an ongoing request. Cancel your current run first\n";
+        alert("You already have an ongoing request. Cancel your current run first");
         return;
     }
 
@@ -200,7 +204,7 @@ form.addEventListener("submit", (e) => {  // Submit button press event
     const formData = new FormData(document.querySelector("form"));
     for (let pair of formData.entries()) {
         if (pair[0] === "link" && pair[1] === "") {
-            console_element.innerHTML = "The link you entered is incorrect. Check if it begins with http:// or https://";
+            alert("The link you entered is incorrect. Check if it begins with http:// or https://");
             return;
         }
         dict[pair[0]] = pair[1];
@@ -211,8 +215,8 @@ form.addEventListener("submit", (e) => {  // Submit button press event
     console_element.innerHTML = "";
 
     // Clear text field
-    let init_info = document.getElementById("init_info");
-    init_info.innerHTML = "";
+    let init_info_1 = document.getElementById("init_info_1");
+    init_info_1.innerHTML = "";
 
     // Clear console div element
     let console = document.getElementById("console");
@@ -222,20 +226,28 @@ form.addEventListener("submit", (e) => {  // Submit button press event
     stop_button.style.color = "red";
 
     socket.emit("send", dict)
+    init_info_1.innerHTML = '<div style="color:yellow;font-size:50px;font-family: terminal, sans-serif;justify-content: center;align-items: center;display: flex;">Processing started</div>'
 });
 
 
 form.addEventListener("reset", (e) => {  // Stop button press event
     e.preventDefault();
-
-    let stop_button = document.getElementById("stop_button");
-    stop_button.style.color = "black";
-    processing_in_progress = false;
-
-    socket.emit("stop");
-
     let console_element = document.getElementById("init_info");
-    console_element.innerHTML += "Processing stopped\n";
+    if(processing_in_progress) {
+        let init_info_1 = document.getElementById("init_info_1");
+        init_info_1.innerHTML = "";
+        console_element.innerHTML = '<div style="color:red;font-size:50px;">Processing stopped</div>';
+        socket.emit("stop");
+        let stop_button = document.getElementById("stop_button");
+        stop_button.style.color = "black";
+        processing_in_progress = false;
+    } else {
+        let init_info_1 = document.getElementById("init_info_1");
+        init_info_1.innerHTML = "";
+        console_element.innerHTML = '<div style="color:red;font-size:50px;">Error: you haven`t started yet';
+        processing_in_progress = false;
+
+    }
 });
 
 
