@@ -4,7 +4,6 @@ from glob import glob
 import urllib.request
 import argparse
 from dataclasses import dataclass
-from threading import Thread
 import progressbar
 import shutil
 
@@ -16,7 +15,6 @@ import asyncio
 from aiohttp import web
 import socketio
 import eventlet
-from flask import Flask, send_from_directory, render_template, request
 
 from config import ip_address, port, server_quality, cors_allowed_origins
 from parse_table import convert_to_csv
@@ -185,7 +183,7 @@ def detect_table(filename, page, prefix_path):
     max_space = 0
     table_coords = None
     for cnt in contours:
-        x, y, w, h = cv2.boundingRect(cnt)
+        _, _, w, h = cv2.boundingRect(cnt)
         rect = cv2.minAreaRect(cnt)
 
         # Bounding the images
@@ -286,7 +284,6 @@ async def process_by_link(link, quality, limit, sid, download_on_finish):
         return False
 
     # Main spreadsheet processing
-    await emit_message('Processing started', sid)
     await process(prefix_path, pdf_file, quality, limit, True, sid, sio, user_connected)
 
     if download_on_finish:
