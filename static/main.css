@@ -43,10 +43,10 @@ body {
     opacity: 1;
 }
 
-#source_link { 
-    padding-bottom: 1; 
-    color: red; 
-    padding-left: 30px; 
+#source_link {
+    padding-bottom: 1;
+    color: red;
+    padding-left: 30px;
 }
 
 #github_logo {
