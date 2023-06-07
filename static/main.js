@@ -9,6 +9,7 @@ socket.on("pingclient", function(sid) {
     socket.emit("pingserver");
 });
 
+
 socket.on("progress", function(message) {
     let border = document.getElementById(message["index"]).querySelector(".slider_border");
     let progress_bar = border.querySelector(".slider");
@@ -24,11 +25,13 @@ socket.on("progress", function(message) {
     processing_in_progress = true;
 });
 
+
 socket.on("init_info", function(message) {
     let text_field = document.getElementById("init_info");
     text_field.innerHTML += message["stdout"] + "\n";
     processing_in_progress = true;
 });
+
 
 socket.on("processing_finished", function(message) {
     let div = document.getElementById(message["index"])
@@ -42,6 +45,7 @@ socket.on("processing_finished", function(message) {
     let target_dropdown = div.querySelector(".download_div");
     target_dropdown.append(button)
 });
+
 
 socket.on("nothing_found_on_page", function(message) {
     let div = document.getElementById(message["index"])
@@ -60,6 +64,7 @@ socket.on("nothing_found_on_page", function(message) {
     let target_dropdown = div.querySelector(".download_div");
     target_dropdown.append(button)
 });
+
 
 socket.on("init", function(message) {
     let console_div = document.getElementById("console");
@@ -182,11 +187,9 @@ socket.on("work_finish", function(message) {  // Receive and download results
     }
     if (processing_in_progress) {
         let init_info_1 = document.getElementById("init_info_1");
-        init_info_1.innerHTML = "";
         init_info_1.innerHTML = '<div style="color:green;font-size:50px;font-family: terminal, sans-serif;justify-content: center;align-items: center;display: flex;">Processing finished</div>'
     }
     processing_in_progress = false;
-    
 });
 
 
@@ -233,7 +236,7 @@ form.addEventListener("submit", (e) => {  // Submit button press event
 form.addEventListener("reset", (e) => {  // Stop button press event
     e.preventDefault();
     let console_element = document.getElementById("init_info");
-    if(processing_in_progress) {
+    if (processing_in_progress) {
         let init_info_1 = document.getElementById("init_info_1");
         init_info_1.innerHTML = "";
         console_element.innerHTML = '<div style="color:red;font-size:50px;">Processing stopped</div>';
@@ -246,7 +249,6 @@ form.addEventListener("reset", (e) => {  // Stop button press event
         init_info_1.innerHTML = "";
         console_element.innerHTML = '<div style="color:red;font-size:50px;">Error: you haven`t started yet';
         processing_in_progress = false;
-
     }
 });
 
