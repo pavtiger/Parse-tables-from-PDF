@@ -22,10 +22,10 @@ Parsed table
 ## Installation
 Required python libraries
 ```shell
-pip install pytesseract opencv-python tqdm progressbar pdf2image pymupdf fitz frontend tools
+pip install pytesseract opencv-python tqdm progressbar pdf2image pymupdf PyMuPDF frontend tools pandas
 
 # Optional for webserver
-pip install aiohttp eventlet
+pip install aiohttp eventlet python-socketio
 ```
 
 Tesseract installation on Linux using `apt`
@@ -45,6 +45,14 @@ Windows
 * Install this exe in C:\Program Files (x86)\Tesseract-OCR
 * Open virtual machine command prompt in windows or anaconda prompt.
 * Run `pip install pytesseract`
+
+### Possible errors
+`AttributeError: module 'fitz' has no attribute 'open'`  
+Uninstall and reinstall pyMuPDF.
+```shell
+pip uninstall PyMuPDF
+pip install PyMuPDF
+```
 
 ## Running
 

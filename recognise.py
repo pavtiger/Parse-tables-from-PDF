@@ -7,16 +7,11 @@ from dataclasses import dataclass
 from threading import Thread
 import progressbar
 import shutil
+import asyncio
 
 import cv2
 import numpy as np
 import fitz
-
-import asyncio
-from aiohttp import web
-import socketio
-import eventlet
-from flask import Flask, send_from_directory, render_template, request
 
 from config import ip_address, port, server_quality, cors_allowed_origins
 from parse_table import convert_to_csv
@@ -33,8 +28,8 @@ ap.add_argument("-r", "--remote", required=False, help="Link to a remote locatio
 ap.add_argument("-l", "--limit", required=False, help="Process only first N pages. (-1 if all). All by default",
                 default=-1)
 ap.add_argument("-q", "--quality", required=False,
-                help="PDF page render quality (default 200). Lower to reduce RAM usage",
-                default=200)  # For instance, 300 requires ~8gb RAM
+                help="PDF page render quality (default 4). Lower to reduce RAM usage",
+                default=4)  # For instance quality=4 renders pages ~ 2300 x 3300
 
 args = vars(ap.parse_args())
 
@@ -46,20 +41,6 @@ MAX_BUFFER_SIZE = 50 * 1000 * 1000  # 50 MB
 # urlib request options
 user_agent = 'Mozilla/5.0'
 headers = {'User-Agent': user_agent,}
-
-# Create a Socket.IO server
-sio = socketio.AsyncServer(async_mode='aiohttp', cors_allowed_origins=cors_allowed_origins,
-                           maxHttpBufferSize=MAX_BUFFER_SIZE, async_handlers=True)
-app = web.Application()
-sio.attach(app)
-
-# Static files server
-async def index(request):
-    with open('static/index.html') as f:
-        return web.Response(text=f.read(), content_type='text/html')
-
-app.router.add_static('/static', 'static')
-app.router.add_get('/', index)
 
 
 process_index = 0
@@ -243,10 +224,6 @@ async def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=Non
         detected_cropped = detect_table(image_path, page_index, prefix_path)
 
         if detected_cropped is not None:
-            # image = cv2.imread(image_path)
-            # cropped = image[detected_cont.y:detected_cont.y + detected_cont.h,
-            #           detected_cont.x:detected_cont.x + detected_cont.w]
-
             cropped_filename = f"{prefix_path}output/cropped/cropped_table_{page_index + 1}.jpg"
             cv2.imwrite(cropped_filename, detected_cropped)
 
@@ -264,7 +241,8 @@ async def process(prefix_path, pdf_file, quality, limit, capture_stdout, sid=Non
                 await sio.emit('processing_finished', {'index': page_index}, room=sid)
 
         else:
-            await sio.emit('nothing_found_on_page', {'index': page_index}, room=sid)
+            if capture_stdout:
+                await sio.emit('nothing_found_on_page', {'index': page_index}, room=sid)
 
         if user_connected is not None and not user_connected[sid]:
             break
@@ -303,62 +281,6 @@ async def process_by_link(link, quality, limit, sid, download_on_finish):
 
     return True
 
-
-@sio.event
-async def connect(sid, environ):
-    user_connected[sid] = True
-    last_seen[sid] = int(time.time() * 1000)
-
-
-@sio.event
-async def connect_error(sid, data):
-    print("The connection failed!")
-
-
-@sio.event
-async def disconnect(sid):
-    user_connected[sid] = False
-    await sio.disconnect(sid)
-
-
-@sio.event
-async def stop(sid):
-    user_connected[sid] = False
-
-
-@sio.on('pingserver')
-async def pingserver(sid):
-    if sid in last_seen.keys():
-        last_seen[sid] = int(time.time() * 1000)
-
-
-@sio.on("download_task")
-async def download_task(sid, index):
-    index = str(int(index) + 1)
-    paths = [os.path.join('static/output/csv/', f'export_table_page_{index}.csv')]
-
-    await sio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
-
-
-@sio.on("send_page_preview")
-async def send_page_preview(sid, index):
-    path = os.path.join('static/output/pages/', f'page_{index}.jpg')
-
-    with open(path, 'rb') as f:
-        image_data = f.read()
-
-    await sio.emit('add_page_image', {"image_data": image_data, "page_index": index, "type": ".image_div"}, room=sid)
-
-
-@sio.on('send')
-async def get_data(sid, message):
-    if not message['link'].lower().startswith('http'):
-        return
-
-    user_connected[sid] = True
-    print(f'Started processing of {sid, message}')
-
-    sio.start_background_task(process_by_link, message['link'], server_quality, message['limit'], sid, message['download_results'])
 
 
 async def show_progress(block_num, block_size, total_size):
@@ -401,10 +323,10 @@ async def client_main(args):
 
     else:
         quality = int(args["quality"])
-        if quality < 200:
-            print('Quality is set to a number smaller than 200. THis is highly unadvised and '
+        if quality < 4:
+            print('Quality is set to a number smaller than 4. This is highly unadvised and '
                   'will cause recognition errors')
-            print('Change quality to 200? [Y/n]')
+            print('Change quality to 4? [Y/n]')
 
             if input().lower() != 'n':
                 quality = 200
@@ -433,6 +355,84 @@ if __name__ == "__main__":
         asyncio.run(client_main(args))
 
     elif args['server']:
+        from aiohttp import web
+        import socketio
+        import eventlet
+
+        # Create a Socket.IO server
+        sio = socketio.AsyncServer(async_mode='aiohttp', cors_allowed_origins=cors_allowed_origins,
+                                   maxHttpBufferSize=MAX_BUFFER_SIZE, async_handlers=True)
+        app = web.Application()
+        sio.attach(app)
+
+        # Static files server
+        async def index(request):
+            with open('static/index.html') as f:
+                return web.Response(text=f.read(), content_type='text/html')
+
+        app.router.add_static('/static', 'static')
+        app.router.add_get('/', index)
+
+
+        # All socketio events
+        @sio.event
+        async def connect(sid, environ):
+            user_connected[sid] = True
+            last_seen[sid] = int(time.time() * 1000)
+
+
+        @sio.event
+        async def connect_error(sid, data):
+            print("The connection failed!")
+
+
+        @sio.event
+        async def disconnect(sid):
+            user_connected[sid] = False
+            await sio.disconnect(sid)
+
+
+        @sio.event
+        async def stop(sid):
+            user_connected[sid] = False
+
+
+        @sio.on('pingserver')
+        async def pingserver(sid):
+            if sid in last_seen.keys():
+                last_seen[sid] = int(time.time() * 1000)
+
+
+        @sio.on("download_task")
+        async def download_task(sid, index):
+            index = str(int(index) + 1)
+            paths = [os.path.join('static/output/csv/', f'export_table_page_{index}.csv')]
+
+            await sio.emit('work_finish', {"download": True, "paths": paths}, room=sid)
+
+
+        @sio.on("send_page_preview")
+        async def send_page_preview(sid, index):
+            path = os.path.join('static/output/pages/', f'page_{index}.jpg')
+
+            with open(path, 'rb') as f:
+                image_data = f.read()
+
+            await sio.emit('add_page_image', {"image_data": image_data, "page_index": index, "type": ".image_div"}, room=sid)
+
+
+        @sio.on('send')
+        async def get_data(sid, message):
+            if not message['link'].lower().startswith('http'):
+                return
+
+            user_connected[sid] = True
+            print(f'Started processing of {sid, message}')
+
+            sio.start_background_task(process_by_link, message['link'], server_quality, message['limit'], sid, message['download_results'])
+
+
+        # Main function code calling process functions
         eventlet.monkey_patch()
         os.makedirs('static/output/processed_documents', exist_ok=True)
         clear_directory('static/output/processed_documents/remote_document_*')
