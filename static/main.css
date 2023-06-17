@@ -28,7 +28,7 @@ body {
     white-space: pre-wrap;
     color: white;
     font-family: terminal, sans-serif;
-    font-size: 30px;
+    font-size: 15px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -64,16 +64,23 @@ body {
 #timer {
     color: white;
     font-family: terminal, sans-serif;
-    font-size: 30px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
+#processing_status {
+    font-family: terminal, sans-serif;
+    font-size: 40px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
 #header {
     color: white;
     font-family: terminal, sans-serif;
-    font-size: 45px;
+    font-size: 35px;
     margin-top: 2%;
     display: flex;
     justify-content: center;
@@ -254,6 +261,11 @@ img {
     border-radius: 60px;
 }
 
+.stopped_process {
+    color: red;
+    font-size: 500px;
+}
+
 .button-placeholder {
     width: 100%;
     height: 50px;
@@ -290,6 +302,8 @@ img {
         margin-top: 2%;
     }
     #init_info { font-size: 30px; }
+    #timer { font-size: 35px; }
+    #processing_status { font-size: 50px; }
     .dropdown { max-width: 60%; }
     .button_text { font-size: 18px; }
     .nothing_found_text { font-size: 18px; }
@@ -299,15 +313,16 @@ img {
 /* Medium devices (tablets, 768px and up) and newer phones. The navbar toggle appears at this breakpoint */
 @media (min-width: 768px) {
     #header {
-        font-size: 70px;
+        font-size: 50px;
         margin-top: 10%;
     }
-    #init_info { font-size: 25px; }
-    #timer { font-size: 40px; }
+    #init_info { font-size: 20px; }
+    #timer { font-size: 30px; }
+    #processing_status { font-size: 40px; }
     .dropdown { max-width: 70%; }
     .button_text { font-size: 22px; }
     .nothing_found_text { font-size: 20px; }
-    .description { font-size: 24px; }
+    .description { font-size: 18px; }
 }
 
 /* Large devices (desktops, 992px and up) */
@@ -317,6 +332,8 @@ img {
         margin-top: 2%;
     }
     #init_info { font-size: 20px; }
+    #timer { font-size: 25px; }
+    #processing_status { font-size: 50px; }
     .dropdown { max-width: 40%; }
     .button_text { font-size: 20px; }
     .nothing_found_text { font-size: 18px; }
@@ -330,6 +347,8 @@ img {
         margin-top: 2%;
     }
     #init_info { font-size: 20px; }
+    #timer { font-size: 25px; }
+    #processing_status { font-size: 50px; }
     .dropdown { max-width: 40%; }
     .button_text { font-size: 22px; }
     .nothing_found_text { font-size: 20px; }

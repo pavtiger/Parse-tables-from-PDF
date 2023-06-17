@@ -10,6 +10,7 @@ socket.on("pingclient", function(sid) {
     socket.emit("pingserver");
 });
 
+
 socket.on("progress", function(message) {
     let border = document.getElementById(message["index"]).querySelector(".slider_border");
     let progress_bar = border.querySelector(".slider");
@@ -22,14 +23,15 @@ socket.on("progress", function(message) {
     }
 
     progress_bar.style.width = message["stdout"].toString() + "%";
-    processing_in_progress = true;
 });
+
 
 socket.on("init_info", function(message) {
     let text_field = document.getElementById("init_info");
     text_field.innerHTML += message["stdout"] + "\n";
     processing_in_progress = true;
 });
+
 
 socket.on("processing_finished", function(message) {
     let div = document.getElementById(message["index"])
@@ -43,6 +45,7 @@ socket.on("processing_finished", function(message) {
     let target_dropdown = div.querySelector(".download_div");
     target_dropdown.append(button)
 });
+
 
 socket.on("nothing_found_on_page", function(message) {
     let div = document.getElementById(message["index"])
@@ -61,6 +64,7 @@ socket.on("nothing_found_on_page", function(message) {
     let target_dropdown = div.querySelector(".download_div");
     target_dropdown.append(button)
 });
+
 
 socket.on("init", function(message) {
     let console_div = document.getElementById("console");
@@ -86,7 +90,6 @@ socket.on("init", function(message) {
             '                    <div class="image_div_table"></div>\n' +
             '                </div>\n' +
             '            </div>');
-
         let div = document.createElement("div");
         div.id = table_ind.toString();
         div.style.height = "40%"
@@ -168,10 +171,8 @@ document.body.onclick = function(e) {  // All mouse clicks event
 
 
 socket.on("work_finish", function(message) {  // Receive and download results
-    if (message["download"]) {
+    if (message["download"]) {  // Download all files on processing finished if required
         let paths = message["paths"]
-        let stop_button = document.getElementById("stop_button");
-        stop_button.style.color = "black";
 
         paths.forEach(function (path) {
             let a = document.createElement("a");
@@ -182,6 +183,14 @@ socket.on("work_finish", function(message) {  // Receive and download results
             document.body.removeChild(a);
         });
     }
+    if (processing_in_progress) {
+        let stop_button = document.getElementById("stop_button");
+        stop_button.style.color = "black";
+
+        let processing_status = document.getElementById("processing_status");
+        processing_status.innerHTML = 'Processing finished'
+        processing_status.style.color = 'green'
+    }
     processing_in_progress = false;
 });
 
@@ -189,10 +198,10 @@ socket.on("work_finish", function(message) {  // Receive and download results
 form.addEventListener("submit", (e) => {  // Submit button press event
     e.preventDefault();
     start_time = Date.now();
-    let console_element = document.getElementById("init_info");
+    let init_element = document.getElementById("init_info");
 
     if (processing_in_progress) {
-        console_element.innerHTML += "You already have an ongoing request. Cancel your current run first\n";
+        alert("You already have an ongoing request. Cancel your current run first");
         return;
     }
 
@@ -200,7 +209,7 @@ form.addEventListener("submit", (e) => {  // Submit button press event
     const formData = new FormData(document.querySelector("form"));
     for (let pair of formData.entries()) {
         if (pair[0] === "link" && pair[1] === "") {
-            console_element.innerHTML = "The link you entered is incorrect. Check if it begins with http:// or https://";
+            alert("The link you entered is incorrect. Check if it begins with http:// or https://");
             return;
         }
         dict[pair[0]] = pair[1];
@@ -208,11 +217,7 @@ form.addEventListener("submit", (e) => {  // Submit button press event
     dict["download_results"] = document.getElementById("download_checkbox").checked;
 
     // Clear console
-    console_element.innerHTML = "";
-
-    // Clear text field
-    let init_info = document.getElementById("init_info");
-    init_info.innerHTML = "";
+    init_element.innerHTML = "";
 
     // Clear console div element
     let console = document.getElementById("console");
@@ -221,21 +226,29 @@ form.addEventListener("submit", (e) => {  // Submit button press event
     let stop_button = document.getElementById("stop_button");
     stop_button.style.color = "red";
 
-    socket.emit("send", dict)
+    socket.emit("send", dict);
+    processing_status.innerHTML = 'Processing in progress';
+    processing_status.style.color = '#36aebf';
 });
 
 
 form.addEventListener("reset", (e) => {  // Stop button press event
     e.preventDefault();
+    let init_element = document.getElementById("init_info");
+    if (processing_in_progress) {
+        let processing_status= document.getElementById("processing_status");
+        processing_status.innerHTML = "Processing stopped";
+        processing_status.style.color = "red";
 
-    let stop_button = document.getElementById("stop_button");
-    stop_button.style.color = "black";
-    processing_in_progress = false;
-
-    socket.emit("stop");
-
-    let console_element = document.getElementById("init_info");
-    console_element.innerHTML += "Processing stopped\n";
+        socket.emit("stop");
+        let stop_button = document.getElementById("stop_button");
+        stop_button.style.color = "black";
+        processing_in_progress = false;
+    } else {
+        let processing_status = document.getElementById("processing_status");
+        processing_status.innerHTML = "Error";
+        alert('Error: you haven`t started processing yet');
+    }
 });
 
 
