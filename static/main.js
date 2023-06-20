@@ -23,6 +23,7 @@ socket.on("progress", function(message) {
     }
 
     progress_bar.style.width = message["stdout"].toString() + "%";
+    processing_in_progress = true;
 });
 
 
@@ -188,8 +189,7 @@ socket.on("work_finish", function(message) {  // Receive and download results
         stop_button.style.color = "black";
 
         let processing_status = document.getElementById("processing_status");
-        processing_status.innerHTML = 'Processing finished'
-        processing_status.style.color = 'green'
+        processing_status.innerHTML = '<div style="color:green;font-size:50px;font-family: terminal, sans-serif;justify-content: center;align-items: center;display: flex;">Processing finished</div>'
     }
     processing_in_progress = false;
 });
@@ -209,7 +209,9 @@ form.addEventListener("submit", (e) => {  // Submit button press event
     const formData = new FormData(document.querySelector("form"));
     for (let pair of formData.entries()) {
         if (pair[0] === "link" && pair[1] === "") {
-            alert("The link you entered is incorrect. Check if it begins with http:// or https://");
+            swal({title: "Error",
+                text: "The link you entered is incorrect. Check if it begins with http:// or https://",
+                confirmButtonColor: "#f81515"});
             return;
         }
         dict[pair[0]] = pair[1];
@@ -226,9 +228,8 @@ form.addEventListener("submit", (e) => {  // Submit button press event
     let stop_button = document.getElementById("stop_button");
     stop_button.style.color = "red";
 
-    socket.emit("send", dict);
-    processing_status.innerHTML = 'Processing in progress';
-    processing_status.style.color = '#36aebf';
+    socket.emit("send", dict)
+    processing_status.innerHTML = '<div style="color:yellow;font-size:50px;font-family: terminal, sans-serif;justify-content: center;align-items: center;display: flex;">Processing started</div>'
 });
 
 
@@ -237,17 +238,19 @@ form.addEventListener("reset", (e) => {  // Stop button press event
     let init_element = document.getElementById("init_info");
     if (processing_in_progress) {
         let processing_status= document.getElementById("processing_status");
-        processing_status.innerHTML = "Processing stopped";
-        processing_status.style.color = "red";
-
+        processing_status.innerHTML = "";
+        console_element.innerHTML = '<div style="color:red;font-size:50px;">Processing stopped</div>';
         socket.emit("stop");
         let stop_button = document.getElementById("stop_button");
         stop_button.style.color = "black";
         processing_in_progress = false;
     } else {
         let processing_status = document.getElementById("processing_status");
-        processing_status.innerHTML = "Error";
-        alert('Error: you haven`t started processing yet');
+        processing_status.innerHTML = "";
+        swal({
+            title: "Error",
+            text: "You haven`t started yet ",
+            confirmButtonColor: "#f81515"});
     }
 });
 
